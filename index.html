@@ -38,6 +38,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="static/js/charts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- ============================ SCHEMA (same as schema.sql) ============================ -->
@@ -476,7 +477,7 @@ function adminDashboard() {
           <span><strong>${esc(r.region_name)}</strong>${r.temperature!=null?` <span class="small text-muted">— ${r.temperature} °C</span>`:''}</span>${sevBadge(r.level)}</div>`).join('')}
         </div>
       </div></div></div>
-      <div class="col-md-6">${summaryCard(summary,true)}</div>
+      <div class="col-md-6">${summaryCard(summary)}</div>
     </div>`);
 }
 
@@ -680,10 +681,10 @@ VIEWS.reports = function() {
   const active = run("SELECT wa.*, r.name AS region_name, s.level, s.rank FROM WarningAlert wa JOIN Region r ON r.region_id=wa.region_id JOIN HeatwaveSeverity s ON s.severity_id=wa.severity_id WHERE wa.is_active=1 ORDER BY s.rank DESC, wa.issued_at DESC");
   app(`${pageHead('Module 7', 'Dashboard & Reports')}
     <div class="row g-3 mb-3">
-      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Status</h6><div class="chartbox"><canvas id="ch1"></canvas></div></div></div></div>
-      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Region</h6><div class="chartbox"><canvas id="ch2"></canvas></div></div></div></div>
-      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Prediction Severity Distribution</h6><div class="chartbox"><canvas id="ch3"></canvas></div></div></div></div>
-      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Predictions Trend (per day)</h6><div class="chartbox"><canvas id="ch4"></canvas></div></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Status</h6><div class="chartbox"><canvas id="statusChart"></canvas></div></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Region</h6><div class="chartbox"><canvas id="regionChart"></canvas></div></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Prediction Severity Distribution</h6><div class="chartbox"><canvas id="severityChart"></canvas></div></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Predictions Trend (per day)</h6><div class="chartbox"><canvas id="trendChart"></canvas></div></div></div></div>
     </div>
     <div class="row g-3">
       <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Region Risk Levels</h6>
@@ -698,25 +699,25 @@ VIEWS.reports = function() {
     </div>`);
   drawCharts();
 };
-let charts = [];
-function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+// Chart rendering itself lives in static/js/charts.js (vendor/chart.umd.min.js
+// loads before it), shared with the Flask reports.html -- this just runs the
+// same queries reports.html's /api/* endpoints run, and hands the results to
+// HeatCharts.draw() in the shape it expects.
 function drawCharts() {
-  charts.forEach(c=>c.destroy()); charts=[];
-  Chart.defaults.color = cssVar('--muted');
-  Chart.defaults.borderColor = cssVar('--rule');
-  Chart.defaults.font.family = 'IBM Plex Sans, system-ui, sans-serif';
-  const SEV = {Low:cssVar('--sev-low'),Moderate:cssVar('--sev-moderate'),High:cssVar('--sev-high'),Extreme:cssVar('--sev-extreme')};
-  const STATUS_COLORS = [cssVar('--status-open'),cssVar('--status-progress'),cssVar('--status-resolved')];
-  const ACCENT = cssVar('--accent');
-  const chartOpts = { responsive:true, maintainAspectRatio:false };
   const st = {}; run("SELECT status, COUNT(*) c FROM Complaint GROUP BY status").forEach(r=>st[r.status]=r.c);
-  charts.push(new Chart(ch1,{type:'pie',data:{labels:['Open','In Progress','Resolved'],datasets:[{data:[st.Open||0,st['In Progress']||0,st.Resolved||0],backgroundColor:STATUS_COLORS}]},options:chartOpts}));
+  const status = { labels: ['Open','In Progress','Resolved'],
+    values: [st.Open||0, st['In Progress']||0, st.Resolved||0] };
+
   const rg = run("SELECT region_name, total_complaints FROM v_region_complaint_summary ORDER BY total_complaints DESC");
-  charts.push(new Chart(ch2,{type:'bar',data:{labels:rg.map(r=>r.region_name),datasets:[{label:'Complaints',data:rg.map(r=>r.total_complaints),backgroundColor:ACCENT}]},options:{...chartOpts,plugins:{legend:{display:false}}}}));
+  const region = { labels: rg.map(r=>r.region_name), values: rg.map(r=>r.total_complaints) };
+
   const sv = run("SELECT s.level, COUNT(hp.prediction_id) c FROM HeatwaveSeverity s LEFT JOIN HeatwavePrediction hp ON hp.severity_id=s.severity_id GROUP BY s.level, s.rank ORDER BY s.rank");
-  charts.push(new Chart(ch3,{type:'bar',data:{labels:sv.map(r=>r.level),datasets:[{label:'Predictions',data:sv.map(r=>r.c),backgroundColor:sv.map(r=>SEV[r.level]||'#999')}]},options:{...chartOpts,plugins:{legend:{display:false}}}}));
+  const severity = { labels: sv.map(r=>r.level), values: sv.map(r=>r.c) };
+
   const tr = run("SELECT date(predicted_at) d, COUNT(*) c FROM HeatwavePrediction GROUP BY date(predicted_at) ORDER BY d");
-  charts.push(new Chart(ch4,{type:'line',data:{labels:tr.map(r=>r.d),datasets:[{label:'Predictions',data:tr.map(r=>r.c),borderColor:ACCENT,backgroundColor:ACCENT+'26',fill:true,tension:.3}]},options:chartOpts}));
+  const trend = { labels: tr.map(r=>r.d), values: tr.map(r=>r.c) };
+
+  HeatCharts.draw({ status, region, severity, trend });
 }
 
 VIEWS.dbadmin = function() {
@@ -770,8 +771,10 @@ function pageHead(eyebrow, title, lede) {
 }
 function statCard(n,label,isAlert){ return `<div class="col-6 col-md-3"><div class="stat"><div class="stat-figure${isAlert?' alert':''}">${n}</div><div class="stat-label">${label}</div></div></div>`; }
 function statusBadge(s){ return `<span class="status-tag" data-status="${s}">${s}</span>`; }
-function summaryCard(summary,short){ return `<div class="card h-100"><div class="card-body"><h5 class="card-title">Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
-  <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Region</th><th class="num">Total</th><th class="num">Open</th><th class="num">${short?'In Prog.':'In Progress'}</th><th class="num">Resolved</th></tr></thead><tbody>
+// Matches templates/_summary_table.html exactly -- one label, not two
+// copies that quietly drift ("In Prog." vs "In Progress").
+function summaryCard(summary){ return `<div class="card h-100"><div class="card-body"><h5 class="card-title">Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
+  <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Region</th><th class="num">Total</th><th class="num">Open</th><th class="num">In Progress</th><th class="num">Resolved</th></tr></thead><tbody>
   ${summary.map(s=>`<tr><td>${esc(s.region_name)}</td><td class="num">${s.total_complaints}</td><td class="num">${s.open_complaints}</td><td class="num">${s.in_progress_complaints}</td><td class="num">${s.resolved_complaints}</td></tr>`).join('')}
   </tbody></table></div></div></div>`; }
 function regionRisk(){ return run(`SELECT r.region_id, r.name AS region_name, COALESCE(s.level,'No data') AS level, COALESCE(s.rank,0) AS rank, hp.temperature

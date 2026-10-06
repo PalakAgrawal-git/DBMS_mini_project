@@ -71,64 +71,21 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script>
-const SEV_COLORS = {
-  Low: getComputedStyle(document.documentElement).getPropertyValue('--sev-low').trim(),
-  Moderate: getComputedStyle(document.documentElement).getPropertyValue('--sev-moderate').trim(),
-  High: getComputedStyle(document.documentElement).getPropertyValue('--sev-high').trim(),
-  Extreme: getComputedStyle(document.documentElement).getPropertyValue('--sev-extreme').trim(),
-};
-const STATUS_COLORS = [
-  getComputedStyle(document.documentElement).getPropertyValue('--status-open').trim(),
-  getComputedStyle(document.documentElement).getPropertyValue('--status-progress').trim(),
-  getComputedStyle(document.documentElement).getPropertyValue('--status-resolved').trim(),
-];
-const ACCENT = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-
-Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
-Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--rule').trim();
-Chart.defaults.font.family = "IBM Plex Sans, system-ui, sans-serif";
-
+// Chart rendering itself lives in static/js/charts.js, shared with the
+// index.html demo -- this just fetches the four endpoints and hands the
+// data to HeatCharts.draw() in the shape it expects.
 async function loadJSON(url){ const r = await fetch(url); return await r.json(); }
 
 (async () => {
-  // Complaints by status (pie)
-  const s = await loadJSON("{{ url_for('api_complaints_by_status') }}");
-  new Chart(document.getElementById('statusChart'), {
-    type: 'pie',
-    data: { labels: s.labels,
-      datasets: [{ data: s.values, backgroundColor: STATUS_COLORS }] },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
-
-  // Complaints by region (bar)
-  const rg = await loadJSON("{{ url_for('api_complaints_by_region') }}");
-  new Chart(document.getElementById('regionChart'), {
-    type: 'bar',
-    data: { labels: rg.labels,
-      datasets: [{ label: 'Complaints', data: rg.values, backgroundColor: ACCENT }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false } } }
-  });
-
-  // Severity distribution (bar, colored)
-  const sv = await loadJSON("{{ url_for('api_severity_distribution') }}");
-  new Chart(document.getElementById('severityChart'), {
-    type: 'bar',
-    data: { labels: sv.labels,
-      datasets: [{ label: 'Predictions', data: sv.values,
-        backgroundColor: sv.labels.map(l => SEV_COLORS[l] || '#999') }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false } } }
-  });
-
-  // Trend (line)
-  const tr = await loadJSON("{{ url_for('api_prediction_trend') }}");
-  new Chart(document.getElementById('trendChart'), {
-    type: 'line',
-    data: { labels: tr.labels,
-      datasets: [{ label: 'Predictions', data: tr.values, borderColor: ACCENT,
-        backgroundColor: ACCENT + '26', fill: true, tension: .3 }] },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  const [status, region, severity, trend] = await Promise.all([
+    loadJSON("{{ url_for('api_complaints_by_status') }}"),
+    loadJSON("{{ url_for('api_complaints_by_region') }}"),
+    loadJSON("{{ url_for('api_severity_distribution') }}"),
+    loadJSON("{{ url_for('api_prediction_trend') }}"),
+  ]);
+  HeatCharts.draw({ status, region, severity, trend });
 })();
 </script>
 {% endblock %}

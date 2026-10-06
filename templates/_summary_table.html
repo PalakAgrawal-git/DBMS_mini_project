@@ -1,0 +1,19 @@
+{# Complaints per region, straight from the v_region_complaint_summary view.
+   Shared by dashboard_admin.html and dashboard_officer.html, which used to
+   carry two copies of this table that had quietly drifted (one said
+   "In Progress", the other "In Prog."). Expects `summary` in scope. #}
+<div class="card h-100"><div class="card-body">
+  <h5 class="card-title">Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
+  <div class="table-responsive">
+    <table class="table table-sm">
+      <thead><tr><th>Region</th><th class="num">Total</th><th class="num">Open</th><th class="num">In Progress</th><th class="num">Resolved</th></tr></thead>
+      <tbody>
+        {% for s in summary %}
+        <tr><td>{{ s.region_name }}</td><td class="num">{{ s.total_complaints }}</td>
+            <td class="num">{{ s.open_complaints }}</td><td class="num">{{ s.in_progress_complaints }}</td>
+            <td class="num">{{ s.resolved_complaints }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div></div>

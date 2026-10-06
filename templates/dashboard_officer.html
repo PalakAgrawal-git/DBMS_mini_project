@@ -38,21 +38,5 @@
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title">Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
-    <div class="table-responsive">
-      <table class="table table-sm">
-        <thead><tr><th>Region</th><th class="num">Total</th><th class="num">Open</th><th class="num">In Progress</th><th class="num">Resolved</th></tr></thead>
-        <tbody>
-          {% for s in summary %}
-          <tr><td>{{ s.region_name }}</td><td class="num">{{ s.total_complaints }}</td>
-              <td class="num">{{ s.open_complaints }}</td><td class="num">{{ s.in_progress_complaints }}</td>
-              <td class="num">{{ s.resolved_complaints }}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+{% include "_summary_table.html" %}
 {% endblock %}
