@@ -1,23 +1,20 @@
 """
 expert_system.py
 ================
-RULE-BASED EXPERT SYSTEM for heatwave severity classification.
+Rule-based classifier for heatwave severity -- fixed IF-THEN threshold rules
+on the latest weather observation, no trained model and no ML libraries.
 
-NOTE FOR VIVA / GRADING:
-    This module is a *rule-based expert system*, NOT a machine-learning model.
-    It classifies heatwave severity purely from fixed IF-THEN threshold rules on
-    the latest weather observation (temperature, humidity, wind speed). There are
-    no trained parameters and no ML libraries involved -- this is intentional and
-    matches the course requirement for a rule-based / knowledge-based AI module.
+Rules (evaluated top-down, first match wins):
 
-Severity rules (evaluated top-down, first match wins):
-    Extreme  : temp >= 45 C,  OR (temp >= 40 C AND humidity <= 20%)
-    High     : temp >= 40 C
-    Moderate : temp >= 35 C
-    Low      : anything below that
+    | Severity | Condition                                      |
+    |----------|-------------------------------------------------|
+    | Extreme  | temp >= 45 C, OR (temp >= 40 C AND humidity <= 20%) |
+    | High     | temp >= 40 C                                     |
+    | Moderate | temp >= 35 C                                     |
+    | Low      | anything below that                              |
 
-The classifier returns a level plus a human-readable reason (which rule fired),
-which is stored in HeatwavePrediction.reason for transparency.
+classify_severity() returns (level, reason) -- reason names which rule fired,
+and is stored in HeatwavePrediction.reason for transparency.
 """
 
 # The four severity levels, matched to the HeatwaveSeverity lookup table.

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head, sev_tag, status_tag %}
 {% block title %}Officer Dashboard{% endblock %}
 {% block content %}
-<h3 class="mb-1">Officer Dashboard</h3>
-<p class="text-muted">{{ current_user.full_name }} &middot; {{ officer.dept_name }} &middot; {{ officer.designation }}</p>
+{{ page_head(current_user.full_name ~ " · " ~ officer.dept_name ~ " · " ~ officer.designation, "Officer Dashboard") }}
 
 <div class="card mb-3">
   <div class="card-body">
@@ -13,24 +13,24 @@
     <div class="table-responsive">
       <table class="table table-hover align-middle">
         <thead>
-          <tr><th>#</th><th>Region</th><th>Risk</th><th>Category</th><th>Citizen</th>
+          <tr><th class="num">#</th><th>Region</th><th>Risk</th><th>Category</th><th>Citizen</th>
               <th>Status</th><th>Filed</th><th></th></tr>
         </thead>
         <tbody>
           {% for c in assigned %}
           <tr>
-            <td>{{ c.complaint_id }}</td>
+            <td class="num">{{ c.complaint_id }}</td>
             <td>{{ c.region_name }}</td>
-            <td><span class="sev-badge sev-{{ c.region_level }}">{{ c.region_level }}</span></td>
+            <td>{{ sev_tag(c.region_level) }}</td>
             <td>{{ c.category }}</td>
             <td>{{ c.citizen_name }}</td>
-            <td>{{ c.status }}</td>
-            <td class="small text-muted">{{ c.created_at }}</td>
+            <td>{{ status_tag(c.status) }}</td>
+            <td class="small text-muted mono" title="{{ c.created_at }}">{{ c.created_at | when }}</td>
             <td><a class="btn btn-sm btn-outline-primary"
                    href="{{ url_for('complaint_detail', complaint_id=c.complaint_id) }}">Manage</a></td>
           </tr>
           {% else %}
-          <tr><td colspan="8" class="text-muted">No complaints assigned.</td></tr>
+          <tr class="empty-row"><td colspan="8">No complaints assigned.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -43,12 +43,12 @@
     <h5 class="card-title">Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
     <div class="table-responsive">
       <table class="table table-sm">
-        <thead><tr><th>Region</th><th>Total</th><th>Open</th><th>In Progress</th><th>Resolved</th></tr></thead>
+        <thead><tr><th>Region</th><th class="num">Total</th><th class="num">Open</th><th class="num">In Progress</th><th class="num">Resolved</th></tr></thead>
         <tbody>
           {% for s in summary %}
-          <tr><td>{{ s.region_name }}</td><td>{{ s.total_complaints }}</td>
-              <td>{{ s.open_complaints }}</td><td>{{ s.in_progress_complaints }}</td>
-              <td>{{ s.resolved_complaints }}</td></tr>
+          <tr><td>{{ s.region_name }}</td><td class="num">{{ s.total_complaints }}</td>
+              <td class="num">{{ s.open_complaints }}</td><td class="num">{{ s.in_progress_complaints }}</td>
+              <td class="num">{{ s.resolved_complaints }}</td></tr>
           {% endfor %}
         </tbody>
       </table>

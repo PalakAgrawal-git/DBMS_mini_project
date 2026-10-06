@@ -1,15 +1,17 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head, sev_tag, status_tag %}
 {% block title %}Complaints{% endblock %}
 {% block content %}
-<h3 class="mb-3">Complaints</h3>
+{{ page_head("Module 5", "Complaints") }}
 
 {% if is_citizen %}
 <div class="card mb-4">
   <div class="card-body">
     <h6 class="card-title">File a new complaint <span class="small text-muted">(region: {{ region.name }})</span></h6>
     <form method="post" action="{{ url_for('add_complaint') }}">
-      <div class="row g-2">
+      <div class="row g-2 align-items-end">
         <div class="col-md-4 mb-2">
+          <label class="form-label">Category</label>
           <select class="form-select form-select-sm" name="category" required>
             <option value="">-- category --</option>
             <option>Water Shortage</option>
@@ -20,6 +22,7 @@
           </select>
         </div>
         <div class="col-md-8 mb-2">
+          <label class="form-label">Description</label>
           <input class="form-control form-control-sm" name="description"
                  placeholder="Describe the issue" required>
         </div>
@@ -40,32 +43,28 @@
       <table class="table table-hover align-middle">
         <thead>
           <tr>
-            <th>#</th><th>Region</th>{% if not is_citizen %}<th>Risk</th><th>Citizen</th>{% endif %}
+            <th class="num">#</th><th>Region</th>{% if not is_citizen %}<th>Risk</th><th>Citizen</th>{% endif %}
             <th>Category</th><th>Status</th><th>Dept</th><th>Filed</th><th></th>
           </tr>
         </thead>
         <tbody>
           {% for c in complaints %}
           <tr>
-            <td>{{ c.complaint_id }}</td>
+            <td class="num">{{ c.complaint_id }}</td>
             <td>{{ c.region_name }}</td>
             {% if not is_citizen %}
-            <td><span class="sev-badge sev-{{ c.region_level }}">{{ c.region_level }}</span></td>
+            <td>{{ sev_tag(c.region_level) }}</td>
             <td>{{ c.citizen_name }}</td>
             {% endif %}
             <td>{{ c.category }}</td>
-            <td>
-              {% if c.status == 'Open' %}<span class="badge bg-secondary">Open</span>
-              {% elif c.status == 'In Progress' %}<span class="badge bg-warning text-dark">In Progress</span>
-              {% else %}<span class="badge bg-success">Resolved</span>{% endif %}
-            </td>
+            <td>{{ status_tag(c.status) }}</td>
             <td class="small">{{ c.dept_name or '-' }}</td>
-            <td class="small text-muted">{{ c.created_at }}</td>
+            <td class="small text-muted mono" title="{{ c.created_at }}">{{ c.created_at | when }}</td>
             <td><a class="btn btn-sm btn-outline-primary"
                    href="{{ url_for('complaint_detail', complaint_id=c.complaint_id) }}">View</a></td>
           </tr>
           {% else %}
-          <tr><td colspan="9" class="text-muted">No complaints.</td></tr>
+          <tr class="empty-row"><td colspan="9">No complaints.</td></tr>
           {% endfor %}
         </tbody>
       </table>

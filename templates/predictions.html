@@ -1,18 +1,16 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head, sev_tag %}
 {% block title %}Heatwave Predictions{% endblock %}
 {% block content %}
-<h3 class="mb-1">AI Heatwave Predictions</h3>
-<p class="text-muted small">
-  Severity is classified by a <strong>rule-based expert system</strong> (threshold rules on the
-  latest observation) &mdash; not a machine-learning model.
-</p>
+{{ page_head("Module 3", "AI Heatwave Predictions", "Severity here comes from a rule-based expert system — fixed threshold rules on the latest observation, not a trained machine-learning model.") }}
 
 {% if can_run %}
 <div class="card mb-3">
   <div class="card-body">
     <h6 class="card-title">Run prediction for a region</h6>
-    <form method="post" action="{{ url_for('run_prediction') }}" class="row g-2">
+    <form method="post" action="{{ url_for('run_prediction') }}" class="row g-2 align-items-end">
       <div class="col-auto">
+        <label class="form-label">Region</label>
         <select class="form-select form-select-sm" name="region_id" required>
           <option value="">-- region --</option>
           {% for r in regions %}<option value="{{ r.region_id }}">{{ r.name }}</option>{% endfor %}
@@ -35,20 +33,20 @@
     <h5 class="card-title">Prediction History</h5>
     <div class="table-responsive">
       <table class="table table-sm">
-        <thead><tr><th>#</th><th>Region</th><th>Severity</th><th>Temp °C</th><th>Humidity %</th>
-          <th>Wind</th><th>Rule fired</th><th>When</th></tr></thead>
+        <thead><tr><th class="num">#</th><th>Region</th><th>Severity</th><th class="num">Temp &deg;C</th><th class="num">Humidity %</th>
+          <th class="num">Wind</th><th>Rule fired</th><th>When</th></tr></thead>
         <tbody>
           {% for p in preds %}
           <tr>
-            <td>{{ p.prediction_id }}</td>
+            <td class="num">{{ p.prediction_id }}</td>
             <td>{{ p.region_name }}</td>
-            <td><span class="sev-badge sev-{{ p.level }}">{{ p.level }}</span></td>
-            <td>{{ p.temperature }}</td><td>{{ p.humidity }}</td><td>{{ p.wind_speed }}</td>
+            <td>{{ sev_tag(p.level) }}</td>
+            <td class="num">{{ p.temperature }}</td><td class="num">{{ p.humidity }}</td><td class="num">{{ p.wind_speed }}</td>
             <td class="small text-muted">{{ p.reason }}</td>
-            <td class="small text-muted">{{ p.predicted_at }}</td>
+            <td class="small text-muted mono" title="{{ p.predicted_at }}">{{ p.predicted_at | when }}</td>
           </tr>
           {% else %}
-          <tr><td colspan="8" class="text-muted">No predictions yet.</td></tr>
+          <tr class="empty-row"><td colspan="8">No predictions yet.</td></tr>
           {% endfor %}
         </tbody>
       </table>

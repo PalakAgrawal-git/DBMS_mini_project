@@ -5,57 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Heatwave Early Warning System{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background: #f6f7f9; }
-        .navbar-brand { font-weight: 700; }
-        .sev-Low       { background:#198754; color:#fff; }
-        .sev-Moderate  { background:#ffc107; color:#000; }
-        .sev-High      { background:#fd7e14; color:#fff; }
-        .sev-Extreme   { background:#dc3545; color:#fff; }
-        .sev-badge { padding:.25rem .6rem; border-radius:.5rem; font-weight:600; font-size:.8rem; }
-        .risk-card { border-left:6px solid #ccc; }
-        .risk-Low      { border-left-color:#198754; }
-        .risk-Moderate { border-left-color:#ffc107; }
-        .risk-High     { border-left-color:#fd7e14; }
-        .risk-Extreme  { border-left-color:#dc3545; }
-        .card { box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/heatguard.css') }}" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-xl navbar-civic">
   <div class="container">
     <a class="navbar-brand" href="{{ url_for('dashboard') if current_user else url_for('login') }}">
       HeatGuard
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+            aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="nav">
       {% if current_user %}
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('weather') }}">Weather</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('predictions') }}">Predictions</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('alerts') }}">Alerts</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('complaints') }}">Complaints</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'weather' }}" href="{{ url_for('weather') }}">Weather</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'predictions' }}" href="{{ url_for('predictions') }}">Predictions</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'alerts' }}" href="{{ url_for('alerts') }}">Alerts</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint in ('complaints', 'complaint_detail') }}" href="{{ url_for('complaints') }}">Complaints</a></li>
         {% if current_user.role in ['Officer','Administrator'] %}
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('reports') }}">Reports</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'reports' }}" href="{{ url_for('reports') }}">Reports</a></li>
         {% endif %}
         {% if current_user.role == 'Administrator' %}
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_db') }}">DB Admin</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'admin_db' }}" href="{{ url_for('admin_db') }}">DB Admin</a></li>
         {% endif %}
       </ul>
-      <ul class="navbar-nav">
+      <ul class="navbar-nav align-items-xl-center">
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('notifications') }}">
+          <a class="nav-link {{ 'active' if request.endpoint == 'notifications' }}" href="{{ url_for('notifications') }}">
             Notifications
             {% if unread_notifications %}
             <span class="badge bg-danger">{{ unread_notifications }}</span>
             {% endif %}
           </a>
         </li>
-        <li class="nav-item">
-          <span class="nav-link">{{ current_user.full_name }} ({{ current_user.role }})</span>
+        <li class="nav-item navbar-user">
+          <span class="navbar-user-name">{{ current_user.full_name }}</span>
+          <span class="navbar-user-role">{{ current_user.role }}</span>
         </li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
       </ul>
@@ -77,9 +68,9 @@
   {% block content %}{% endblock %}
 </div>
 
-<footer class="text-center text-muted small py-3">
-  Heatwave Complaint &amp; Early Warning System &mdash; DBMS Mini Project
-  &middot; AI module = rule-based expert system (no ML)
+<footer class="site-footer text-center py-3">
+  HeatGuard &mdash; Heatwave Complaint &amp; Early Warning System &middot; DBMS Mini Project
+  &middot; <a href="https://github.com/AgrawalPalak08/DBMS_mini_project" target="_blank">source on GitHub</a>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

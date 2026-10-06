@@ -1,20 +1,20 @@
 # AI-Based Heatwave Complaint & Early Warning System
 
-A DBMS mini-project: a centralized system for weather monitoring, **rule-based**
-heatwave severity prediction, citizen complaints, automatic warning alerts, and
-government response tracking.
+A DBMS mini-project: weather monitoring, rule-based heatwave severity
+prediction, citizen complaints, automatic warning alerts, and government
+response tracking, all in one system.
 
-> **🔴 Live demo (runs in your browser):** https://agrawalpalak08.github.io/DBMS_mini_project/
-> The live demo is a client-side build that runs **real SQLite in the browser** (via sql.js) —
-> including the actual schema, trigger, and view — so you can click through the whole project
-> with no install. The **Flask backend version** in this repo is the full server-based
-> implementation for the lab (run it with the steps below).
+> **Live demo:** https://agrawalpalak08.github.io/DBMS_mini_project/
+> It's a client-side build that runs real SQLite in the browser (via sql.js),
+> including the actual schema, trigger and view, so you can click through the
+> whole project with no install. The Flask version in this repo is the full
+> server-based implementation for the lab — run it with the steps below.
 
 - **Backend:** Python (Flask)
 - **Database:** SQLite (single file `heatwave.db`)
 - **Frontend:** Server-rendered Jinja2 templates + Bootstrap 5
 - **Charts:** Chart.js
-- **"AI" module:** a **rule-based expert system** (threshold rules) — **no ML libraries**.
+- **"AI" module:** a rule-based expert system (threshold rules), no ML libraries — more on this in [section 3](#3-the-rule-based-expert-system-ai-module).
 
 ---
 
@@ -142,19 +142,24 @@ and the backend attaches a static set of **Advisory** messages for that severity
 
 ```
 DBMS_mini_project/
-├── app.py               # Flask backend, all 8 modules
-├── expert_system.py     # rule-based expert system (severity classifier)
-├── schema.sql           # complete SQL schema + trigger + view
-├── init_db.py           # builds heatwave.db from schema.sql, then seeds
-├── seed.py              # realistic dummy data
+├── app.py                    # Flask backend, all 8 modules
+├── expert_system.py          # rule-based expert system (severity classifier)
+├── schema.sql                # complete SQL schema + trigger + view
+├── init_db.py                # builds heatwave.db from schema.sql, then seeds
+├── seed.py                   # realistic dummy data
 ├── requirements.txt
-├── templates/           # Jinja2 templates (citizen/officer/admin/dashboard/...)
+├── static/css/heatguard.css  # shared stylesheet (Flask + the index.html demo)
+├── templates/                # Jinja2 templates (citizen/officer/admin/dashboard/...)
+│   └── _macros.html          # sev_tag / status_tag / page_head, used by every page
+├── index.html                # standalone demo: same UI, runs on SQLite in the browser
 └── README.md
 ```
 
 ---
 
-## 6. How this maps to the grading points (viva reference)
+## 6. Where things live
+
+A quick map from each grading point to the code, for the viva.
 
 | Grading point            | Where it is implemented |
 |--------------------------|--------------------------|

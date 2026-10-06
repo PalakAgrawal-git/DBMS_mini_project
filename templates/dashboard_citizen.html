@@ -1,23 +1,21 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head, sev_tag, status_tag %}
 {% block title %}Citizen Dashboard{% endblock %}
 {% block content %}
-<h3 class="mb-3">Welcome, {{ current_user.full_name }}</h3>
-<p class="text-muted">Your region: <strong>{{ region.name }}, {{ region.state }}</strong></p>
+{{ page_head("Your region: " ~ region.name ~ ", " ~ region.state, "Welcome, " ~ current_user.full_name) }}
 
 <div class="row g-3">
   <div class="col-md-6">
-    <div class="card">
+    <div class="card h-100">
       <div class="card-body">
         <h5 class="card-title">Current Heat Status</h5>
         {% if latest_pred %}
-          <p>Latest severity for your region:
-            <span class="sev-badge sev-{{ latest_pred.level }}">{{ latest_pred.level }}</span>
-          </p>
+          <p>Latest severity for your region: {{ sev_tag(latest_pred.level) }}</p>
           <p class="small text-muted mb-1">
             Recorded {{ latest_pred.temperature }} &deg;C, humidity {{ latest_pred.humidity }}%,
             wind {{ latest_pred.wind_speed }} km/h
           </p>
-          <p class="small text-muted">Assessed at {{ latest_pred.predicted_at }}</p>
+          <p class="small text-muted mono" title="{{ latest_pred.predicted_at }}">Assessed {{ latest_pred.predicted_at | when }}</p>
         {% else %}
           <p class="text-muted">No prediction available yet for your region.</p>
         {% endif %}
@@ -26,7 +24,7 @@
   </div>
 
   <div class="col-md-6">
-    <div class="card">
+    <div class="card h-100">
       <div class="card-body">
         <h5 class="card-title">Advisories</h5>
         {% if advisories %}
@@ -47,9 +45,9 @@
     {% if alerts %}
       {% for a in alerts %}
       <div class="alert alert-warning mb-2">
-        <span class="sev-badge sev-{{ a.level }}">{{ a.level }}</span>
+        {{ sev_tag(a.level) }}
         {{ a.message }}
-        <div class="small text-muted">Issued {{ a.issued_at }}</div>
+        <div class="small text-muted mono" title="{{ a.issued_at }}">Issued {{ a.issued_at | when }}</div>
       </div>
       {% endfor %}
     {% else %}
@@ -65,17 +63,17 @@
   </div>
   <div class="table-responsive">
     <table class="table table-sm mb-0">
-      <thead><tr><th>#</th><th>Category</th><th>Status</th><th>Filed</th></tr></thead>
+      <thead><tr><th class="num">#</th><th>Category</th><th>Status</th><th>Filed</th></tr></thead>
       <tbody>
         {% for c in my_complaints %}
         <tr>
-          <td><a href="{{ url_for('complaint_detail', complaint_id=c.complaint_id) }}">{{ c.complaint_id }}</a></td>
+          <td class="num"><a href="{{ url_for('complaint_detail', complaint_id=c.complaint_id) }}">{{ c.complaint_id }}</a></td>
           <td>{{ c.category }}</td>
-          <td>{{ c.status }}</td>
-          <td class="small text-muted">{{ c.created_at }}</td>
+          <td>{{ status_tag(c.status) }}</td>
+          <td class="small text-muted mono" title="{{ c.created_at }}">{{ c.created_at | when }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="4" class="text-muted">No complaints filed yet.</td></tr>
+        <tr class="empty-row"><td colspan="4">No complaints filed yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>

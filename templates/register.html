@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 {% block title %}Register &mdash; HeatGuard{% endblock %}
 {% block content %}
+{{ page_head("Create an account", "Register") }}
 <div class="row justify-content-center">
   <div class="col-md-7">
     <div class="card">
       <div class="card-body">
-        <h4 class="card-title mb-3">Create an account</h4>
         <form method="post">
           <div class="row">
             <div class="col-md-6 mb-3">

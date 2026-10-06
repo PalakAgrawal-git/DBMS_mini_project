@@ -1,25 +1,22 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head, status_tag %}
 {% block title %}Complaint #{{ c.complaint_id }}{% endblock %}
 {% block content %}
 <a href="{{ url_for('complaints') }}" class="small">&larr; Back to complaints</a>
-<h3 class="mb-3 mt-2">Complaint #{{ c.complaint_id }}</h3>
+{{ page_head("Module 5 / 6", "Complaint #" ~ c.complaint_id) }}
 
 <div class="row g-3">
   <div class="col-md-7">
     <div class="card"><div class="card-body">
-      <h5 class="card-title">{{ c.category }}
-        {% if c.status == 'Open' %}<span class="badge bg-secondary">Open</span>
-        {% elif c.status == 'In Progress' %}<span class="badge bg-warning text-dark">In Progress</span>
-        {% else %}<span class="badge bg-success">Resolved</span>{% endif %}
-      </h5>
+      <h5 class="card-title">{{ c.category }} {{ status_tag(c.status) }}</h5>
       <p>{{ c.description }}</p>
       <table class="table table-sm">
         <tr><th>Region</th><td>{{ c.region_name }}</td></tr>
         <tr><th>Filed by</th><td>{{ c.citizen_name }}</td></tr>
         <tr><th>Department</th><td>{{ c.dept_name or 'Not assigned' }}</td></tr>
         <tr><th>Officer</th><td>{{ c.officer_name or 'Not assigned' }}</td></tr>
-        <tr><th>Created</th><td>{{ c.created_at }}</td></tr>
-        <tr><th>Resolved</th><td>{{ c.resolved_at or '-' }}</td></tr>
+        <tr><th>Created</th><td class="mono" title="{{ c.created_at }}">{{ c.created_at | when }}</td></tr>
+        <tr><th>Resolved</th><td class="mono" title="{{ c.resolved_at or '' }}">{{ c.resolved_at | when }}</td></tr>
       </table>
     </div></div>
   </div>
@@ -30,7 +27,7 @@
       <h6 class="card-title">Assign</h6>
       <form method="post" action="{{ url_for('assign_complaint', complaint_id=c.complaint_id) }}">
         <div class="mb-2">
-          <label class="form-label small">Department</label>
+          <label class="form-label">Department</label>
           <select class="form-select form-select-sm" name="dept_id">
             <option value="">-- none --</option>
             {% for d in departments %}
@@ -39,7 +36,7 @@
           </select>
         </div>
         <div class="mb-2">
-          <label class="form-label small">Officer</label>
+          <label class="form-label">Officer</label>
           <select class="form-select form-select-sm" name="officer_id">
             <option value="">-- none --</option>
             {% for o in officers %}
@@ -55,14 +52,16 @@
 
     <div class="card"><div class="card-body">
       <h6 class="card-title">Update Status</h6>
-      <form method="post" action="{{ url_for('update_complaint_status', complaint_id=c.complaint_id) }}"
-            class="d-flex gap-2">
-        <select class="form-select form-select-sm" name="status">
-          <option {{ 'selected' if c.status=='Open' }}>Open</option>
-          <option {{ 'selected' if c.status=='In Progress' }}>In Progress</option>
-          <option {{ 'selected' if c.status=='Resolved' }}>Resolved</option>
-        </select>
-        <button class="btn btn-sm btn-success">Save</button>
+      <form method="post" action="{{ url_for('update_complaint_status', complaint_id=c.complaint_id) }}">
+        <label class="form-label" for="status">Status</label>
+        <div class="d-flex gap-2 align-items-end">
+          <select class="form-select form-select-sm" name="status" id="status">
+            <option {{ 'selected' if c.status=='Open' }}>Open</option>
+            <option {{ 'selected' if c.status=='In Progress' }}>In Progress</option>
+            <option {{ 'selected' if c.status=='Resolved' }}>Resolved</option>
+          </select>
+          <button class="btn btn-sm btn-success">Save</button>
+        </div>
       </form>
       <p class="small text-muted mt-2 mb-0">Workflow: Open &rarr; In Progress &rarr; Resolved</p>
     </div></div>

@@ -1,52 +1,55 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head, sev_tag %}
 {% block title %}Dashboard &amp; Reports{% endblock %}
 {% block content %}
-<h3 class="mb-3">Dashboard &amp; Reports</h3>
+{{ page_head("Module 7", "Dashboard & Reports") }}
 
 <div class="row g-3 mb-3">
   <div class="col-md-6">
-    <div class="card"><div class="card-body">
+    <div class="card h-100"><div class="card-body">
       <h6 class="card-title">Complaints by Status</h6>
-      <canvas id="statusChart" height="180"></canvas>
+      <div class="chartbox"><canvas id="statusChart"></canvas></div>
     </div></div>
   </div>
   <div class="col-md-6">
-    <div class="card"><div class="card-body">
+    <div class="card h-100"><div class="card-body">
       <h6 class="card-title">Complaints by Region</h6>
-      <canvas id="regionChart" height="180"></canvas>
+      <div class="chartbox"><canvas id="regionChart"></canvas></div>
     </div></div>
   </div>
   <div class="col-md-6">
-    <div class="card"><div class="card-body">
+    <div class="card h-100"><div class="card-body">
       <h6 class="card-title">Prediction Severity Distribution</h6>
-      <canvas id="severityChart" height="180"></canvas>
+      <div class="chartbox"><canvas id="severityChart"></canvas></div>
     </div></div>
   </div>
   <div class="col-md-6">
-    <div class="card"><div class="card-body">
+    <div class="card h-100"><div class="card-body">
       <h6 class="card-title">Predictions Trend (per day)</h6>
-      <canvas id="trendChart" height="180"></canvas>
+      <div class="chartbox"><canvas id="trendChart"></canvas></div>
     </div></div>
   </div>
 </div>
 
 <div class="row g-3">
   <div class="col-md-6">
-    <div class="card"><div class="card-body">
+    <div class="card h-100"><div class="card-body">
       <h6 class="card-title">Region Risk Levels</h6>
-      {% for r in risk %}
-      <div class="card risk-card risk-{{ r.level }} mb-2"><div class="card-body py-2 d-flex justify-content-between">
-        <span>{{ r.region_name }}
-          {% if r.temperature is not none %}<span class="small text-muted">&mdash; {{ r.temperature }} °C</span>{% endif %}
-        </span>
-        <span class="sev-badge sev-{{ r.level if r.level != 'No data' else 'Low' }}">{{ r.level }}</span>
-      </div></div>
-      {% endfor %}
+      <div class="risk-list">
+        {% for r in risk %}
+        <div class="risk-row" data-level="{{ r.level if r.level != 'No data' else 'Low' }}">
+          <span><strong>{{ r.region_name }}</strong>
+            {% if r.temperature is not none %}<span class="small text-muted">&mdash; {{ r.temperature }} &deg;C</span>{% endif %}
+          </span>
+          {{ sev_tag(r.level) }}
+        </div>
+        {% endfor %}
+      </div>
     </div></div>
   </div>
 
   <div class="col-md-6">
-    <div class="card"><div class="card-body">
+    <div class="card h-100"><div class="card-body">
       <h6 class="card-title">Active Alerts</h6>
       <div class="table-responsive">
         <table class="table table-sm">
@@ -54,10 +57,10 @@
           <tbody>
             {% for a in active_alerts %}
             <tr><td>{{ a.region_name }}</td>
-                <td><span class="sev-badge sev-{{ a.level }}">{{ a.level }}</span></td>
-                <td class="small text-muted">{{ a.issued_at }}</td></tr>
+                <td>{{ sev_tag(a.level) }}</td>
+                <td class="small text-muted mono" title="{{ a.issued_at }}">{{ a.issued_at | when }}</td></tr>
             {% else %}
-            <tr><td colspan="3" class="text-muted">No active alerts.</td></tr>
+            <tr class="empty-row"><td colspan="3">No active alerts.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -69,7 +72,22 @@
 
 {% block scripts %}
 <script>
-const SEV_COLORS = { Low:'#198754', Moderate:'#ffc107', High:'#fd7e14', Extreme:'#dc3545' };
+const SEV_COLORS = {
+  Low: getComputedStyle(document.documentElement).getPropertyValue('--sev-low').trim(),
+  Moderate: getComputedStyle(document.documentElement).getPropertyValue('--sev-moderate').trim(),
+  High: getComputedStyle(document.documentElement).getPropertyValue('--sev-high').trim(),
+  Extreme: getComputedStyle(document.documentElement).getPropertyValue('--sev-extreme').trim(),
+};
+const STATUS_COLORS = [
+  getComputedStyle(document.documentElement).getPropertyValue('--status-open').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--status-progress').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--status-resolved').trim(),
+];
+const ACCENT = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+
+Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--rule').trim();
+Chart.defaults.font.family = "IBM Plex Sans, system-ui, sans-serif";
 
 async function loadJSON(url){ const r = await fetch(url); return await r.json(); }
 
@@ -79,7 +97,8 @@ async function loadJSON(url){ const r = await fetch(url); return await r.json();
   new Chart(document.getElementById('statusChart'), {
     type: 'pie',
     data: { labels: s.labels,
-      datasets: [{ data: s.values, backgroundColor: ['#6c757d','#ffc107','#198754'] }] }
+      datasets: [{ data: s.values, backgroundColor: STATUS_COLORS }] },
+    options: { responsive: true, maintainAspectRatio: false }
   });
 
   // Complaints by region (bar)
@@ -87,8 +106,8 @@ async function loadJSON(url){ const r = await fetch(url); return await r.json();
   new Chart(document.getElementById('regionChart'), {
     type: 'bar',
     data: { labels: rg.labels,
-      datasets: [{ label: 'Complaints', data: rg.values, backgroundColor: '#0d6efd' }] },
-    options: { plugins: { legend: { display:false } } }
+      datasets: [{ label: 'Complaints', data: rg.values, backgroundColor: ACCENT }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false } } }
   });
 
   // Severity distribution (bar, colored)
@@ -98,7 +117,7 @@ async function loadJSON(url){ const r = await fetch(url); return await r.json();
     data: { labels: sv.labels,
       datasets: [{ label: 'Predictions', data: sv.values,
         backgroundColor: sv.labels.map(l => SEV_COLORS[l] || '#999') }] },
-    options: { plugins: { legend: { display:false } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false } } }
   });
 
   // Trend (line)
@@ -106,8 +125,9 @@ async function loadJSON(url){ const r = await fetch(url); return await r.json();
   new Chart(document.getElementById('trendChart'), {
     type: 'line',
     data: { labels: tr.labels,
-      datasets: [{ label: 'Predictions', data: tr.values, borderColor: '#dc3545',
-        backgroundColor: 'rgba(220,53,69,.15)', fill: true, tension: .3 }] }
+      datasets: [{ label: 'Predictions', data: tr.values, borderColor: ACCENT,
+        backgroundColor: ACCENT + '26', fill: true, tension: .3 }] },
+    options: { responsive: true, maintainAspectRatio: false }
   });
 })();
 </script>

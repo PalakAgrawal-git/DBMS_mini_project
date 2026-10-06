@@ -1,211 +1,39 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HeatGuard — AI Heatwave Complaint & Early Warning System</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg-0:#050403; --bg-1:#0b0705; --bg-2:#100a07;
-    --panel:rgba(24,14,10,.62); --panel-brd:rgba(255,110,50,.14);
-    --accent:#ff5722; --accent-2:#ff9838; --red:#e11d1d; --red-2:#ff3b3b;
-    --text:#f1e9e4; --muted:#a98c7e;
-  }
-  * { font-family:'Inter',system-ui,sans-serif; }
-  html,body { background:var(--bg-0); color:var(--text); }
-  body {
-    min-height:100vh;
-    background:
-      radial-gradient(900px 500px at 8% -15%, rgba(225,29,29,.12), transparent 55%),
-      radial-gradient(820px 520px at 98% -5%, rgba(255,107,53,.11), transparent 52%),
-      radial-gradient(700px 600px at 50% 130%, rgba(255,60,20,.07), transparent 55%),
-      linear-gradient(160deg, var(--bg-0), var(--bg-1) 60%, var(--bg-2));
-    background-attachment:fixed;
-  }
-
-  /* Navbar */
-  .navbar { background:rgba(10,14,26,.72)!important; backdrop-filter:blur(12px);
-            border-bottom:1px solid var(--panel-brd); }
-  .navbar-brand {
-    font-weight:800; letter-spacing:.5px; font-size:1.35rem; margin-right:1.5rem;
-    background:linear-gradient(90deg, var(--red-2), var(--accent) 45%, var(--accent-2));
-    background-size:200% auto; -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent; animation:shimmer 6s linear infinite;
-  }
-  @keyframes shimmer { to { background-position:200% center; } }
-  .navbar-brand::before { content:"🔥 "; -webkit-text-fill-color:initial; }
-  /* Tab spacing */
-  #mainmenu { gap:.5rem; }
-  #mainmenu .nav-item { margin:0 .3rem; }
-  #mainmenu .nav-link { padding-left:.6rem; padding-right:.6rem; }
-  #usermenu .nav-item { margin-left:.4rem; }
-  .nav-link { cursor:pointer; position:relative; transition:color .2s; color:var(--muted)!important; }
-  .nav-link:hover { color:#fff!important; }
-  #mainmenu .nav-link::after {
-    content:""; position:absolute; left:.5rem; right:.5rem; bottom:2px; height:2px;
-    background:linear-gradient(90deg,var(--red-2),var(--accent-2)); transform:scaleX(0);
-    transform-origin:left; transition:transform .25s; border-radius:2px;
-  }
-  #mainmenu .nav-link:hover::after { transform:scaleX(1); }
-
-  /* Panels / cards — glassy */
-  .card {
-    background:var(--panel)!important; border:1px solid var(--panel-brd)!important;
-    border-radius:16px!important; backdrop-filter:blur(10px);
-    box-shadow:0 8px 30px rgba(0,0,0,.35); transition:transform .25s, box-shadow .25s, border-color .25s;
-  }
-  .card:hover { transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,.5);
-                border-color:rgba(255,107,53,.35)!important; }
-  .card .card:hover { transform:none; }
-  h3,h4,h5 { font-weight:700; }
-
-  /* Stat number cards */
-  .display-6 { font-weight:800; background:linear-gradient(120deg,var(--accent),var(--accent-2));
-    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-  .display-6.text-danger { background:linear-gradient(120deg,#ff4d6d,#ff8a3a);
-    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-
-  /* Severity badges — glowing */
-  .sev-badge { padding:.28rem .7rem; border-radius:999px; font-weight:700; font-size:.78rem;
-    letter-spacing:.3px; display:inline-block; }
-  .sev-Low      { background:linear-gradient(120deg,#12b981,#0ea371); color:#fff; box-shadow:0 0 14px rgba(16,185,129,.5); }
-  .sev-Moderate { background:linear-gradient(120deg,#fbbf24,#f59e0b); color:#1a1400; box-shadow:0 0 14px rgba(245,158,11,.5); }
-  .sev-High     { background:linear-gradient(120deg,#fb923c,#f97316); color:#fff; box-shadow:0 0 16px rgba(249,115,22,.6); }
-  .sev-Extreme  { background:linear-gradient(120deg,#f43f5e,#e11d48); color:#fff;
-                  box-shadow:0 0 18px rgba(244,63,94,.7); animation:pulse 1.8s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{ box-shadow:0 0 10px rgba(244,63,94,.5);} 50%{ box-shadow:0 0 22px rgba(244,63,94,.95);} }
-
-  /* Risk cards */
-  .risk-card { border-left:5px solid #ccc; border-radius:12px!important; }
-  .risk-Low{border-left-color:#12b981;} .risk-Moderate{border-left-color:#f59e0b;}
-  .risk-High{border-left-color:#f97316;} .risk-Extreme{border-left-color:#f43f5e;}
-
-  /* Buttons */
-  .btn-primary { background:linear-gradient(120deg,var(--accent),var(--accent-2)); border:none;
-    box-shadow:0 4px 14px rgba(255,107,53,.4); transition:transform .15s, box-shadow .2s; }
-  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(255,107,53,.6);
-    background:linear-gradient(120deg,#ff7d4a,#ffb84d); }
-  .btn-success { background:linear-gradient(120deg,#12b981,#0ea371); border:none; }
-  .btn, .list-group-item, .form-control, .form-select { transition:all .18s ease; }
-
-  /* Tables */
-  .table { --bs-table-bg:transparent; --bs-table-color:var(--text); }
-  .table thead th { color:var(--muted); border-color:var(--panel-brd); text-transform:uppercase;
-    font-size:.72rem; letter-spacing:.6px; }
-  .table td { border-color:rgba(120,140,200,.1); }
-  .table-hover tbody tr { transition:background .15s; }
-  .table-hover tbody tr:hover { background:rgba(255,107,53,.08)!important; }
-
-  /* Login list */
-  .list-group-item { background:rgba(255,255,255,.03); border-color:var(--panel-brd);
-    color:var(--text); border-radius:12px!important; margin-bottom:.5rem; }
-  .list-group-item:hover { background:rgba(255,107,53,.12); transform:translateX(6px);
-    border-color:rgba(255,107,53,.4); }
-
-  .alert-warning { background:rgba(245,158,11,.14); border:1px solid rgba(245,158,11,.35); color:#ffe0a3; }
-  .alert-success { background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.35); color:#a7f3d0; }
-  .alert-danger  { background:rgba(244,63,94,.14); border:1px solid rgba(244,63,94,.35); color:#ffc2cd; }
-  a { color:var(--accent-2); }
-  code { color:var(--accent-2); }
-  .text-muted { color:var(--muted)!important; }
-  textarea.font-monospace { background:#140a07; color:#f4ece8; border-color:var(--panel-brd); }
-  .form-control, .form-select { background:rgba(255,255,255,.04); border-color:var(--panel-brd); color:var(--text); }
-  .form-control:focus, .form-select:focus { background:rgba(255,255,255,.06);
-    border-color:var(--accent); box-shadow:0 0 0 .2rem rgba(255,107,53,.2); color:var(--text); }
-
-  /* ---- Login / hero landing ---- */
-  .hero { padding:2.6rem 1rem 1.4rem; }
-  .hero-flame { font-size:3.4rem; filter:drop-shadow(0 8px 24px rgba(255,87,34,.55));
-    animation:flick 1.5s ease-in-out infinite; }
-  .hero-title { font-weight:800; font-size:3rem; letter-spacing:1px; margin:.15rem 0 0;
-    background:linear-gradient(90deg,#ff3b3b,#ff5722 45%,#ff9838); background-size:200% auto;
-    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-    animation:shimmer 6s linear infinite; }
-  .hero-sub { color:var(--text); font-weight:600; font-size:1.12rem; margin:.35rem 0 .5rem; }
-  .hero-desc { color:var(--muted); max-width:640px; margin:0 auto 1.1rem; line-height:1.6; }
-  .chips { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; }
-  .chip { background:rgba(255,110,50,.09); border:1px solid rgba(255,110,50,.24); color:#ffcaa8;
-    padding:.38rem .85rem; border-radius:999px; font-size:.8rem; font-weight:500; transition:.2s; }
-  .chip:hover { background:rgba(255,110,50,.18); transform:translateY(-2px); }
-  .login-panel { max-width:880px; margin:.6rem auto 0; background:var(--panel);
-    border:1px solid var(--panel-brd); border-radius:22px; padding:1.6rem;
-    backdrop-filter:blur(12px); box-shadow:0 16px 50px rgba(0,0,0,.55);
-    animation:riseIn .5s cubic-bezier(.2,.7,.2,1); }
-  .live-dot { color:#ff5c5c; font-size:.78rem; font-weight:600; }
-  .live-dot::first-letter { animation:blink 1.3s steps(1) infinite; }
-  @keyframes blink { 50%{ opacity:.25; } }
-  .user-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; }
-  @media (max-width:720px){ .user-grid{ grid-template-columns:1fr; } .hero-title{ font-size:2.3rem; } }
-  .user-card { display:flex; align-items:center; gap:.9rem; padding:.85rem 1rem; border-radius:15px;
-    background:rgba(255,255,255,.025); border:1px solid var(--panel-brd); cursor:pointer;
-    transition:transform .2s, background .2s, border-color .2s; position:relative; overflow:hidden; }
-  .user-card::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
-    background:var(--accent); opacity:0; transition:opacity .2s; }
-  .user-card:hover { transform:translateY(-3px); background:rgba(255,87,34,.09);
-    border-color:rgba(255,87,34,.45); }
-  .user-card:hover::before { opacity:1; }
-  .user-card:hover .enter { opacity:1; transform:translateX(0); }
-  .avatar { width:46px; height:46px; border-radius:13px; display:flex; align-items:center;
-    justify-content:center; font-weight:800; font-size:1rem; color:#fff; flex-shrink:0;
-    box-shadow:0 4px 14px rgba(0,0,0,.4); }
-  .avatar.adm { background:linear-gradient(135deg,#e11d1d,#ff5722); }
-  .avatar.off { background:linear-gradient(135deg,#ff5722,#ff9838); }
-  .avatar.cit { background:linear-gradient(135deg,#b23a10,#6b2410); }
-  .user-meta { flex:1; min-width:0; }
-  .user-name { font-weight:700; }
-  .user-handle { color:var(--muted); font-size:.79rem; overflow:hidden; text-overflow:ellipsis;
-    white-space:nowrap; }
-  .role-pill { font-size:.7rem; font-weight:700; padding:.26rem .62rem; border-radius:999px; flex-shrink:0; }
-  .role-pill.adm { background:rgba(225,29,29,.2); color:#ffb0b0; border:1px solid rgba(225,29,29,.4); }
-  .role-pill.off { background:rgba(255,152,56,.18); color:#ffca8a; border:1px solid rgba(255,152,56,.42); }
-  .role-pill.cit { background:rgba(255,255,255,.07); color:#d9c7bd; border:1px solid rgba(255,255,255,.16); }
-  .enter { color:var(--accent-2); font-weight:800; font-size:1.25rem; opacity:0;
-    transform:translateX(-6px); transition:.2s; flex-shrink:0; }
-
-  /* View entry animation */
-  @keyframes riseIn { from{ opacity:0; transform:translateY(16px);} to{ opacity:1; transform:none;} }
-  #app.animate { animation:riseIn .45s cubic-bezier(.2,.7,.2,1); }
-  #app .card { animation:riseIn .5s both; }
-  #app .row > [class*="col"]:nth-child(2) .card { animation-delay:.06s; }
-  #app .row > [class*="col"]:nth-child(3) .card { animation-delay:.12s; }
-  #app .row > [class*="col"]:nth-child(4) .card { animation-delay:.18s; }
-
-  #loading { position:fixed; inset:0; background:radial-gradient(circle at 50% 40%, #1a0a05, #050403);
-    display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:9999;
-    color:var(--text); }
-  #loading .flame { font-size:3rem; animation:flick 1.1s ease-in-out infinite; }
-  @keyframes flick { 0%,100%{ transform:scale(1) rotate(-4deg); opacity:.85;} 50%{ transform:scale(1.18) rotate(4deg); opacity:1;} }
-  ::-webkit-scrollbar { width:10px; height:10px; }
-  ::-webkit-scrollbar-thumb { background:linear-gradient(var(--red-2),var(--accent-2)); border-radius:8px; }
-  ::-webkit-scrollbar-track { background:#0b0705; }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="static/css/heatguard.css" rel="stylesheet">
 </head>
 <body>
 
-<div id="loading">
-  <div class="flame">🔥</div>
-  <div class="mt-2" style="font-weight:600;letter-spacing:.5px;">HeatGuard</div>
-  <div class="text-muted mt-1" style="font-size:.9rem;">Booting in-browser database (SQLite / sql.js)…</div>
-</div>
+<div id="loading">Loading database&hellip;</div>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-xl navbar-civic">
   <div class="container">
-    <a class="navbar-brand" onclick="go('dashboard')">HeatGuard</a>
+    <a class="navbar-brand" href="#" onclick="go('dashboard');return false;">HeatGuard</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+            aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
     <div class="collapse navbar-collapse" id="navbar">
       <ul class="navbar-nav me-auto" id="mainmenu"></ul>
-      <ul class="navbar-nav" id="usermenu"></ul>
+      <ul class="navbar-nav align-items-xl-center" id="usermenu"></ul>
     </div>
   </div>
 </nav>
 
 <div class="container my-4" id="app"></div>
 
-<footer class="text-center text-muted small py-3">
-  Heatwave Complaint &amp; Early Warning System &mdash; DBMS Mini Project ·
-  runs entirely in your browser with real SQLite (sql.js) · AI module = rule-based expert system (no ML)
-  · <a href="https://github.com/AgrawalPalak08/DBMS_mini_project" target="_blank">source &amp; Flask version on GitHub</a>
+<footer class="site-footer text-center py-3">
+  HeatGuard &mdash; Heatwave Complaint &amp; Early Warning System &middot; DBMS Mini Project
+  &middot; runs entirely in your browser with real SQLite (sql.js)
+  &middot; <a href="https://github.com/AgrawalPalak08/DBMS_mini_project" target="_blank">source &amp; Flask version on GitHub</a>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
@@ -483,6 +311,8 @@ function citizenOf(uid){ return one("SELECT * FROM Citizen WHERE user_id=?",[uid
 function officerOf(uid){ return one("SELECT o.*, d.name AS dept_name FROM Officer o JOIN GovernmentDepartment d ON d.dept_id=o.dept_id WHERE o.user_id=?",[uid]); }
 
 // ---- Navigation ----
+let currentView = 'dashboard';
+
 function buildNav() {
   const menu = document.getElementById('mainmenu');
   const um = document.getElementById('usermenu');
@@ -491,63 +321,70 @@ function buildNav() {
     ["alerts","Alerts"],["complaints","Complaints"]];
   if (currentUser.role !== 'Citizen') links.push(["reports","Reports"]);
   if (currentUser.role === 'Administrator') { links.push(["dbadmin","DB Admin"]); links.push(["sql","SQL Console"]); }
-  menu.innerHTML = links.map(([v,l]) => `<li class="nav-item"><a class="nav-link" onclick="go('${v}')">${l}</a></li>`).join('');
-  um.innerHTML = `<li class="nav-item"><span class="nav-link">${esc(currentUser.full_name)} (${currentUser.role})</span></li>
-    <li class="nav-item"><a class="nav-link" onclick="logout()">Switch user</a></li>`;
+  menu.innerHTML = links.map(([v,l]) =>
+    `<li class="nav-item"><a class="nav-link ${v===currentView?'active':''}" href="#"
+       onclick="go('${v}');return false;">${l}</a></li>`).join('');
+  um.innerHTML = `<li class="nav-item navbar-user">
+      <span class="navbar-user-name">${esc(currentUser.full_name)}</span>
+      <span class="navbar-user-role">${currentUser.role}</span>
+    </li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="logout();return false;">Switch account</a></li>`;
 }
-function go(view){ buildNav(); (VIEWS[view]||VIEWS.dashboard)(); window.scrollTo(0,0); }
+function go(view){ currentView = view; buildNav(); (VIEWS[view]||VIEWS.dashboard)(); window.scrollTo(0,0); }
 function logout(){ currentUser=null; buildNav(); loginScreen(); }
 function loginAs(uid){ currentUser = one("SELECT * FROM User WHERE user_id=?",[uid]); go('dashboard'); }
 
 function app(html){
-  const el = document.getElementById('app');
-  el.classList.remove('animate'); void el.offsetWidth;  // restart animation
-  el.innerHTML = html;
-  el.classList.add('animate');
+  document.getElementById('app').innerHTML = html;
 }
-function sevBadge(l){ return `<span class="sev-badge sev-${l==='No data'?'Low':l}">${l}</span>`; }
+function sevBadge(l){
+  // heatguard.css styles data-level="No data" on its own (muted), matching
+  // the sev_tag() Jinja macro on the Flask side -- same markup, same CSS.
+  return `<span class="sev-tag" data-level="${l}"><span class="sev-tag-mark"></span>${l}</span>`;
+}
 
 // ---- Login screen ----
 function initials(name){ return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function loginScreen() {
   const users = run("SELECT * FROM User ORDER BY CASE role WHEN 'Administrator' THEN 1 WHEN 'Officer' THEN 2 ELSE 3 END, full_name");
   const meta = {
-    Administrator: {cls:'adm', desc:'Full access · DB admin · reports'},
-    Officer:       {cls:'off', desc:'Assign &amp; resolve complaints'},
-    Citizen:       {cls:'cit', desc:'File complaints · view alerts'}
+    Administrator: {cls:'adm', desc:'Full access, DB admin, reports'},
+    Officer:       {cls:'off', desc:'Assigns and resolves complaints'},
+    Citizen:       {cls:'cit', desc:'Files complaints, views alerts'}
   };
+  const groups = [
+    ['Administrator', 'Administrator'],
+    ['Officer', 'Officers'],
+    ['Citizen', 'Citizens'],
+  ];
+
+  function accountRow(u) {
+    const m = meta[u.role];
+    return `
+      <a class="account-row" href="#" onclick="loginAs(${u.user_id});return false;">
+        <div class="account-avatar ${m.cls}">${initials(u.full_name)}</div>
+        <div class="account-meta">
+          <div class="account-name">${esc(u.full_name)}</div>
+          <div class="account-handle">@${esc(u.username)}</div>
+          <div class="account-desc">${m.desc}</div>
+        </div>
+        <span class="account-role">${u.role}</span>
+      </a>`;
+  }
+
   app(`
-   <div class="hero text-center">
-     <div class="hero-flame">🔥</div>
-     <h1 class="hero-title">HeatGuard</h1>
-     <p class="hero-sub">AI-Based Heatwave Complaint &amp; Early Warning System</p>
-     <p class="hero-desc">Weather monitoring, rule-based heatwave prediction, citizen complaints and
-        automatic warning alerts — a DBMS mini-project running on real SQLite, right in your browser.</p>
-     <div class="chips">
-       <span class="chip">⚡ Real SQLite (sql.js)</span>
-       <span class="chip">🧠 Rule-based expert system</span>
-       <span class="chip">🔐 Role-based access</span>
-       <span class="chip">📊 Live dashboard &amp; reports</span>
-     </div>
+   <div class="hero">
+     <p class="eyebrow">DBMS Mini Project</p>
+     <h1>HeatGuard</h1>
+     <p>Pick an account to look around. Everything runs on a real SQLite database inside your
+        browser, so feel free to break things &mdash; refresh the page to reset.</p>
    </div>
-   <div class="login-panel">
-     <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
-       <div><h4 class="mb-0">Choose an account to enter</h4>
-         <span class="text-muted small">Each role opens a different dashboard</span></div>
-       <span class="live-dot">● live demo</span>
-     </div>
-     <div class="user-grid">
-       ${users.map(u => { const m = meta[u.role]; return `
-         <div class="user-card ${m.cls}" onclick="loginAs(${u.user_id})">
-           <div class="avatar ${m.cls}">${initials(u.full_name)}</div>
-           <div class="user-meta">
-             <div class="user-name">${esc(u.full_name)}</div>
-             <div class="user-handle">@${esc(u.username)} · ${m.desc}</div>
-           </div>
-           <span class="role-pill ${m.cls}">${u.role}</span>
-           <span class="enter">→</span>
-         </div>`; }).join('')}
-     </div>
+   <div class="account-section">
+     ${groups.map(([role, label]) => {
+        const rows = users.filter(u => u.role === role);
+        if (!rows.length) return '';
+        return `<p class="account-group-label">${label}</p>${rows.map(accountRow).join('')}`;
+      }).join('')}
    </div>`);
 }
 
@@ -568,27 +405,27 @@ function citizenDashboard() {
   const mine = run("SELECT * FROM Complaint WHERE citizen_id=? ORDER BY created_at DESC",[c.citizen_id]);
   const adv = pred ? (ADVISORIES[pred.level]||[]) : [];
   app(`
-    <h3>Welcome, ${esc(currentUser.full_name)}</h3>
-    <p class="text-muted">Your region: <strong>${esc(region.name)}, ${esc(region.state)}</strong></p>
+    ${pageHead('Your region: ' + esc(region.name) + ', ' + esc(region.state), 'Welcome, ' + esc(currentUser.full_name))}
     <div class="row g-3">
-      <div class="col-md-6"><div class="card"><div class="card-body">
-        <h5>Current Heat Status</h5>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body">
+        <h5 class="card-title">Current Heat Status</h5>
         ${pred ? `<p>Latest severity: ${sevBadge(pred.level)}</p>
-          <p class="small text-muted">Recorded ${pred.temperature} °C, humidity ${pred.humidity}%, wind ${pred.wind_speed} km/h<br>Assessed at ${pred.predicted_at}</p>`
+          <p class="small text-muted">Recorded ${pred.temperature} °C, humidity ${pred.humidity}%, wind ${pred.wind_speed} km/h</p>
+          <p class="small text-muted mono" title="${pred.predicted_at}">Assessed ${fmtDate(pred.predicted_at)}</p>`
           : `<p class="text-muted">No prediction yet.</p>`}
       </div></div></div>
-      <div class="col-md-6"><div class="card"><div class="card-body">
-        <h5>Advisories</h5>${adv.length?`<ul class="mb-0">${adv.map(a=>`<li>${esc(a)}</li>`).join('')}</ul>`:`<p class="text-muted mb-0">No advisories.</p>`}
+      <div class="col-md-6"><div class="card h-100"><div class="card-body">
+        <h5 class="card-title">Advisories</h5>${adv.length?`<ul class="mb-0">${adv.map(a=>`<li>${esc(a)}</li>`).join('')}</ul>`:`<p class="text-muted mb-0">No advisories.</p>`}
       </div></div></div>
     </div>
     <div class="card mt-3"><div class="card-body">
-      <h5>Active Warning Alerts for ${esc(region.name)}</h5>
-      ${alerts.length?alerts.map(a=>`<div class="alert alert-warning mb-2">${sevBadge(a.level)} ${esc(a.message)}<div class="small text-muted">Issued ${a.issued_at}</div></div>`).join(''):`<p class="text-muted mb-0">No active alerts. Stay safe!</p>`}
+      <h5 class="card-title">Active Warning Alerts for ${esc(region.name)}</h5>
+      ${alerts.length?alerts.map(a=>`<div class="alert alert-warning mb-2">${sevBadge(a.level)} ${esc(a.message)}<div class="small text-muted mono" title="${a.issued_at}">Issued ${fmtDate(a.issued_at)}</div></div>`).join(''):`<p class="text-muted mb-0">No active alerts. Stay safe!</p>`}
     </div></div>
     <div class="card mt-3"><div class="card-body">
-      <div class="d-flex justify-content-between"><h5>My Complaints</h5><button class="btn btn-sm btn-primary" onclick="go('complaints')">File / View</button></div>
-      <table class="table table-sm mt-2"><thead><tr><th>#</th><th>Category</th><th>Status</th><th>Filed</th></tr></thead><tbody>
-      ${mine.length?mine.map(c=>`<tr><td>${c.complaint_id}</td><td>${esc(c.category)}</td><td>${statusBadge(c.status)}</td><td class="small text-muted">${c.created_at}</td></tr>`).join(''):`<tr><td colspan="4" class="text-muted">None yet.</td></tr>`}
+      <div class="d-flex justify-content-between"><h5 class="card-title mb-0">My Complaints</h5><button class="btn btn-sm btn-primary" onclick="go('complaints')">File / View</button></div>
+      <table class="table table-sm mt-2"><thead><tr><th class="num">#</th><th>Category</th><th>Status</th><th>Filed</th></tr></thead><tbody>
+      ${mine.length?mine.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.category)}</td><td>${statusBadge(c.status)}</td><td class="small text-muted mono" title="${c.created_at}">${fmtDate(c.created_at)}</td></tr>`).join(''):`<tr class="empty-row"><td colspan="4">None yet.</td></tr>`}
       </tbody></table>
     </div></div>`);
 }
@@ -607,13 +444,12 @@ function officerDashboard() {
     ORDER BY (c.status='Resolved') ASC, region_rank DESC, c.created_at ASC`,[o.officer_id,o.dept_id]);
   const summary = run("SELECT * FROM v_region_complaint_summary ORDER BY total_complaints DESC");
   app(`
-    <h3 class="mb-1">Officer Dashboard</h3>
-    <p class="text-muted">${esc(currentUser.full_name)} · ${esc(o.dept_name)} · ${esc(o.designation)}</p>
+    ${pageHead(esc(currentUser.full_name) + ' · ' + esc(o.dept_name) + ' · ' + esc(o.designation), 'Officer Dashboard')}
     <div class="card mb-3"><div class="card-body">
-      <h5>Complaints assigned to you / your department</h5>
+      <h5 class="card-title">Complaints assigned to you / your department</h5>
       <p class="small text-muted">Ordered by current region severity (Extreme/High first), then oldest first.</p>
-      <table class="table table-hover align-middle"><thead><tr><th>#</th><th>Region</th><th>Risk</th><th>Category</th><th>Citizen</th><th>Status</th><th></th></tr></thead><tbody>
-      ${assigned.length?assigned.map(c=>`<tr><td>${c.complaint_id}</td><td>${esc(c.region_name)}</td><td>${sevBadge(c.region_level)}</td><td>${esc(c.category)}</td><td>${esc(c.citizen_name)}</td><td>${statusBadge(c.status)}</td><td><button class="btn btn-sm btn-outline-primary" onclick="go('complaints');setTimeout(()=>openComplaint(${c.complaint_id}),0)">Manage</button></td></tr>`).join(''):`<tr><td colspan="7" class="text-muted">No complaints assigned.</td></tr>`}
+      <table class="table table-hover align-middle"><thead><tr><th class="num">#</th><th>Region</th><th>Risk</th><th>Category</th><th>Citizen</th><th>Status</th><th></th></tr></thead><tbody>
+      ${assigned.length?assigned.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.region_name)}</td><td>${sevBadge(c.region_level)}</td><td>${esc(c.category)}</td><td>${esc(c.citizen_name)}</td><td>${statusBadge(c.status)}</td><td><button class="btn btn-sm btn-outline-primary" onclick="go('complaints');setTimeout(()=>openComplaint(${c.complaint_id}),0)">Manage</button></td></tr>`).join(''):`<tr class="empty-row"><td colspan="7">No complaints assigned.</td></tr>`}
       </tbody></table>
     </div></div>
     ${summaryCard(summary)}`);
@@ -628,15 +464,17 @@ function adminDashboard() {
   const summary = run("SELECT * FROM v_region_complaint_summary ORDER BY total_complaints DESC");
   const risk = regionRisk();
   app(`
-    <h3 class="mb-3">Administrator Dashboard</h3>
+    ${pageHead('Overview', 'Administrator Dashboard')}
     <div class="row g-3 mb-3">
       ${statCard(counts.regions,'Regions')}${statCard(counts.users,'Users')}
-      ${statCard(counts.complaints,'Complaints')}${statCard(counts.alerts,'Active Alerts','text-danger')}
+      ${statCard(counts.complaints,'Complaints')}${statCard(counts.alerts,'Active Alerts',true)}
     </div>
     <div class="row g-3">
-      <div class="col-md-6"><div class="card"><div class="card-body"><h5>Region Risk Levels</h5>
-        ${risk.map(r=>`<div class="card risk-card risk-${r.level==='No data'?'Low':r.level} mb-2"><div class="card-body py-2 d-flex justify-content-between align-items-center">
-          <span><strong>${esc(r.region_name)}</strong>${r.temperature!=null?` <span class="small text-muted">— ${r.temperature} °C</span>`:''}</span>${sevBadge(r.level)}</div></div>`).join('')}
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h5 class="card-title">Region Risk Levels</h5>
+        <div class="risk-list">
+        ${risk.map(r=>`<div class="risk-row" data-level="${r.level==='No data'?'Low':r.level}">
+          <span><strong>${esc(r.region_name)}</strong>${r.temperature!=null?` <span class="small text-muted">— ${r.temperature} °C</span>`:''}</span>${sevBadge(r.level)}</div>`).join('')}
+        </div>
       </div></div></div>
       <div class="col-md-6">${summaryCard(summary,true)}</div>
     </div>`);
@@ -648,38 +486,40 @@ VIEWS.weather = function() {
   const obs = run("SELECT wo.*, ws.name AS station_name, r.name AS region_name FROM WeatherObservation wo JOIN WeatherStation ws ON ws.station_id=wo.station_id JOIN Region r ON r.region_id=ws.region_id ORDER BY wo.observed_at DESC LIMIT 50");
   const regions = run("SELECT * FROM Region ORDER BY name");
   app(`
-    <h3 class="mb-3">Weather Monitoring</h3>
+    ${pageHead('Module 2', 'Weather Monitoring')}
     ${canEdit?`<div class="card mb-3"><div class="card-body">
-      <h6>Record Weather Observation</h6>
+      <h6 class="card-title">Record Weather Observation</h6>
       <div class="row g-2 align-items-end">
-        <div class="col-md-3"><select id="w_station" class="form-select form-select-sm">${stations.map(s=>`<option value="${s.station_id}">${esc(s.name)} (${esc(s.region_name)})</option>`).join('')}</select></div>
-        <div class="col"><input id="w_temp" type="number" step="0.1" class="form-control form-control-sm" placeholder="Temp °C"></div>
-        <div class="col"><input id="w_hum" type="number" step="0.1" class="form-control form-control-sm" placeholder="Humidity %"></div>
-        <div class="col"><input id="w_wind" type="number" step="0.1" class="form-control form-control-sm" placeholder="Wind km/h"></div>
+        <div class="col-md-3"><label class="form-label">Station</label>
+          <select id="w_station" class="form-select form-select-sm">${stations.map(s=>`<option value="${s.station_id}">${esc(s.name)} (${esc(s.region_name)})</option>`).join('')}</select></div>
+        <div class="col"><label class="form-label">Temp °C</label><input id="w_temp" type="number" step="0.1" class="form-control form-control-sm"></div>
+        <div class="col"><label class="form-label">Humidity %</label><input id="w_hum" type="number" step="0.1" class="form-control form-control-sm"></div>
+        <div class="col"><label class="form-label">Wind km/h</label><input id="w_wind" type="number" step="0.1" class="form-control form-control-sm"></div>
         <div class="col-auto"><button class="btn btn-sm btn-primary" onclick="addObservation()">Record + Predict</button></div>
       </div>
       <p class="small text-muted mt-2 mb-0">Recording runs the rule-based expert system; High/Extreme results auto-create an alert via the database trigger.</p>
     </div></div>`:''}
-    <div class="card mb-3"><div class="card-body"><h5>Weather Stations</h5>
-      <table class="table table-sm"><thead><tr><th>ID</th><th>Name</th><th>Region</th><th>Lat</th><th>Lon</th></tr></thead><tbody>
-      ${stations.map(s=>`<tr><td>${s.station_id}</td><td>${esc(s.name)}</td><td>${esc(s.region_name)}</td><td>${s.latitude}</td><td>${s.longitude}</td></tr>`).join('')}
-      </tbody></table></div></div>
-    <div class="card"><div class="card-body"><h5>Recent Observations</h5>
-      <table class="table table-sm"><thead><tr><th>Region</th><th>Station</th><th>Temp °C</th><th>Humidity %</th><th>Wind</th><th>Observed</th></tr></thead><tbody>
-      ${obs.map(o=>`<tr><td>${esc(o.region_name)}</td><td>${esc(o.station_name)}</td><td>${o.temperature}</td><td>${o.humidity}</td><td>${o.wind_speed}</td><td class="small text-muted">${o.observed_at}</td></tr>`).join('')}
-      </tbody></table></div></div>`);
+    <div class="card mb-3"><div class="card-body"><h5 class="card-title">Weather Stations</h5>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th class="num">ID</th><th>Name</th><th>Region</th><th class="num">Lat</th><th class="num">Lon</th></tr></thead><tbody>
+      ${stations.map(s=>`<tr><td class="num">${s.station_id}</td><td>${esc(s.name)}</td><td>${esc(s.region_name)}</td><td class="num">${s.latitude}</td><td class="num">${s.longitude}</td></tr>`).join('')}
+      </tbody></table></div></div></div>
+    <div class="card"><div class="card-body"><h5 class="card-title">Recent Observations</h5>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Region</th><th>Station</th><th class="num">Temp °C</th><th class="num">Humidity %</th><th class="num">Wind km/h</th><th>Observed</th></tr></thead><tbody>
+      ${obs.map(o=>`<tr><td>${esc(o.region_name)}</td><td>${esc(o.station_name)}</td><td class="num">${o.temperature}</td><td class="num">${o.humidity}</td><td class="num">${o.wind_speed}</td><td class="small text-muted mono" title="${o.observed_at}">${fmtDate(o.observed_at)}</td></tr>`).join('')}
+      </tbody></table></div></div></div>`);
 };
 function addObservation() {
   const sid = +document.getElementById('w_station').value;
   const t = parseFloat(document.getElementById('w_temp').value);
   const h = parseFloat(document.getElementById('w_hum').value);
   const w = parseFloat(document.getElementById('w_wind').value);
-  if (isNaN(t)||isNaN(h)||isNaN(w)) { alert("Enter temperature, humidity and wind."); return; }
+  if (isNaN(t)||isNaN(h)||isNaN(w)) { notice("Enter temperature, humidity and wind.", "warning"); return; }
   exec("INSERT INTO WeatherObservation (station_id,temperature,humidity,wind_speed,recorded_by) VALUES (?,?,?,?,?)",[sid,t,h,w,currentUser.user_id]);
   const obsId = one("SELECT last_insert_rowid() AS id").id;
   const reg = one("SELECT region_id FROM WeatherStation WHERE station_id=?",[sid]).region_id;
   runPrediction(reg, obsId, t, h, w);
   VIEWS.weather();
+  notice("Weather observation recorded.", "success");
 }
 function runPrediction(regionId, obsId, t, h, w) {
   const [level,reason] = classifySeverity(t,h);
@@ -694,25 +534,25 @@ VIEWS.predictions = function() {
   const regions = run("SELECT * FROM Region ORDER BY name");
   const preds = run("SELECT hp.*, r.name AS region_name, s.level FROM HeatwavePrediction hp JOIN Region r ON r.region_id=hp.region_id JOIN HeatwaveSeverity s ON s.severity_id=hp.severity_id ORDER BY hp.predicted_at DESC LIMIT 100");
   app(`
-    <h3 class="mb-1">AI Heatwave Predictions</h3>
-    <p class="text-muted small">Severity is classified by a <strong>rule-based expert system</strong> (threshold rules) — not machine learning.</p>
-    ${canRun?`<div class="card mb-3"><div class="card-body"><h6>Run prediction for a region</h6>
-      <div class="row g-2"><div class="col-auto"><select id="p_region" class="form-select form-select-sm">${regions.map(r=>`<option value="${r.region_id}">${esc(r.name)}</option>`).join('')}</select></div>
+    ${pageHead('Module 3', 'AI Heatwave Predictions', 'Severity here comes from a rule-based expert system — fixed threshold rules on the latest observation, not a trained machine-learning model.')}
+    ${canRun?`<div class="card mb-3"><div class="card-body"><h6 class="card-title">Run prediction for a region</h6>
+      <div class="row g-2 align-items-end"><div class="col-auto"><label class="form-label">Region</label>
+        <select id="p_region" class="form-select form-select-sm">${regions.map(r=>`<option value="${r.region_id}">${esc(r.name)}</option>`).join('')}</select></div>
       <div class="col-auto"><button class="btn btn-sm btn-primary" onclick="runRegionPrediction()">Classify latest observation</button></div></div>
       <p class="small text-muted mt-2 mb-0">Uses the region's most recent observation. High/Extreme auto-creates an alert (DB trigger).</p>
     </div></div>`:''}
-    <div class="card"><div class="card-body"><h5>Prediction History</h5>
-      <table class="table table-sm"><thead><tr><th>#</th><th>Region</th><th>Severity</th><th>Temp</th><th>Hum</th><th>Wind</th><th>Rule fired</th><th>When</th></tr></thead><tbody>
-      ${preds.map(p=>`<tr><td>${p.prediction_id}</td><td>${esc(p.region_name)}</td><td>${sevBadge(p.level)}</td><td>${p.temperature}</td><td>${p.humidity}</td><td>${p.wind_speed}</td><td class="small text-muted">${esc(p.reason)}</td><td class="small text-muted">${p.predicted_at}</td></tr>`).join('')}
-      </tbody></table></div></div>`);
+    <div class="card"><div class="card-body"><h5 class="card-title">Prediction History</h5>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th class="num">#</th><th>Region</th><th>Severity</th><th class="num">Temp</th><th class="num">Hum</th><th class="num">Wind</th><th>Rule fired</th><th>When</th></tr></thead><tbody>
+      ${preds.map(p=>`<tr><td class="num">${p.prediction_id}</td><td>${esc(p.region_name)}</td><td>${sevBadge(p.level)}</td><td class="num">${p.temperature}</td><td class="num">${p.humidity}</td><td class="num">${p.wind_speed}</td><td class="small text-muted">${esc(p.reason)}</td><td class="small text-muted mono" title="${p.predicted_at}">${fmtDate(p.predicted_at)}</td></tr>`).join('')}
+      </tbody></table></div></div></div>`);
 };
 function runRegionPrediction() {
   const reg = +document.getElementById('p_region').value;
   const obs = one("SELECT wo.* FROM WeatherObservation wo JOIN WeatherStation ws ON ws.station_id=wo.station_id WHERE ws.region_id=? ORDER BY wo.observed_at DESC LIMIT 1",[reg]);
-  if (!obs) { alert("No observation for that region yet."); return; }
+  if (!obs) { notice("No observation for that region yet.", "warning"); return; }
   const level = runPrediction(reg, obs.obs_id, obs.temperature, obs.humidity, obs.wind_speed);
   VIEWS.predictions();
-  setTimeout(()=>alert("Prediction complete: severity classified as "+level),50);
+  notice("Prediction complete: severity classified as " + level + ".", "success");
 }
 
 VIEWS.alerts = function() {
@@ -723,15 +563,15 @@ VIEWS.alerts = function() {
   } else {
     rows = run("SELECT wa.*, r.name AS region_name, s.level FROM WarningAlert wa JOIN Region r ON r.region_id=wa.region_id JOIN HeatwaveSeverity s ON s.severity_id=wa.severity_id WHERE wa.is_active=1 ORDER BY wa.issued_at DESC");
   }
-  app(`<h3 class="mb-3">Active Warning Alerts</h3>
+  app(`${pageHead('Module 4', 'Active Warning Alerts')}
     ${rows.length?rows.map(a=>`<div class="card mb-3"><div class="card-body">
-      <div class="d-flex justify-content-between"><div>${sevBadge(a.level)} <strong class="ms-2">${esc(a.region_name)}</strong></div>
+      <div class="d-flex justify-content-between align-items-start"><div>${sevBadge(a.level)} <strong class="ms-2">${esc(a.region_name)}</strong></div>
       ${canManage?`<button class="btn btn-sm btn-outline-secondary" onclick="deactivateAlert(${a.alert_id})">Mark inactive</button>`:''}</div>
       <p class="mt-2 mb-1">${esc(a.message)}</p>
       <div class="mt-1"><strong class="small">Advisories:</strong><ul class="small mb-0">${(ADVISORIES[a.level]||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
-      <div class="small text-muted mt-2">Issued ${a.issued_at}</div></div></div>`).join(''):`<div class="alert alert-success">No active warning alerts right now.</div>`}`);
+      <div class="small text-muted mono mt-2" title="${a.issued_at}">Issued ${fmtDate(a.issued_at)}</div></div></div>`).join(''):`<div class="alert alert-success">No active warning alerts right now.</div>`}`);
 };
-function deactivateAlert(id){ exec("UPDATE WarningAlert SET is_active=0 WHERE alert_id=?",[id]); VIEWS.alerts(); }
+function deactivateAlert(id){ exec("UPDATE WarningAlert SET is_active=0 WHERE alert_id=?",[id]); VIEWS.alerts(); notice("Alert marked inactive.", "info"); }
 
 VIEWS.complaints = function() {
   const depts = run("SELECT * FROM GovernmentDepartment ORDER BY name");
@@ -739,18 +579,19 @@ VIEWS.complaints = function() {
     const c = citizenOf(currentUser.user_id);
     const region = one("SELECT * FROM Region WHERE region_id=?",[c.region_id]);
     const rows = run("SELECT c.*, r.name AS region_name, d.name AS dept_name FROM Complaint c JOIN Region r ON r.region_id=c.region_id LEFT JOIN GovernmentDepartment d ON d.dept_id=c.dept_id WHERE c.citizen_id=? ORDER BY c.created_at DESC",[c.citizen_id]);
-    app(`<h3 class="mb-3">Complaints</h3>
+    app(`${pageHead('Module 5', 'Complaints')}
       <div class="card mb-4"><div class="card-body">
-        <h6>File a new complaint <span class="small text-muted">(region: ${esc(region.name)})</span></h6>
-        <div class="row g-2"><div class="col-md-4"><select id="c_cat" class="form-select form-select-sm">
+        <h6 class="card-title">File a new complaint <span class="small text-muted">(region: ${esc(region.name)})</span></h6>
+        <div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Category</label>
+          <select id="c_cat" class="form-select form-select-sm">
           <option>Water Shortage</option><option>Power Outage</option><option>Heat Illness</option><option>Public Cooling</option><option>Other</option></select></div>
-          <div class="col-md-6"><input id="c_desc" class="form-control form-control-sm" placeholder="Describe the issue"></div>
+          <div class="col-md-6"><label class="form-label">Description</label><input id="c_desc" class="form-control form-control-sm" placeholder="Describe the issue"></div>
           <div class="col-auto"><button class="btn btn-sm btn-primary" onclick="addComplaint()">Submit</button></div></div>
       </div></div>
-      <div class="card"><div class="card-body"><h5>My Complaints</h5>
-        <table class="table table-hover align-middle"><thead><tr><th>#</th><th>Category</th><th>Status</th><th>Dept</th><th>Filed</th><th></th></tr></thead><tbody>
-        ${rows.length?rows.map(r=>`<tr><td>${r.complaint_id}</td><td>${esc(r.category)}</td><td>${statusBadge(r.status)}</td><td class="small">${esc(r.dept_name||'-')}</td><td class="small text-muted">${r.created_at}</td><td><button class="btn btn-sm btn-outline-primary" onclick="openComplaint(${r.complaint_id})">View</button></td></tr>`).join(''):`<tr><td colspan="6" class="text-muted">None.</td></tr>`}
-        </tbody></table></div></div>`);
+      <div class="card"><div class="card-body"><h5 class="card-title">My Complaints</h5>
+        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th class="num">#</th><th>Category</th><th>Status</th><th>Dept</th><th>Filed</th><th></th></tr></thead><tbody>
+        ${rows.length?rows.map(r=>`<tr><td class="num">${r.complaint_id}</td><td>${esc(r.category)}</td><td>${statusBadge(r.status)}</td><td class="small">${esc(r.dept_name||'-')}</td><td class="small text-muted mono" title="${r.created_at}">${fmtDate(r.created_at)}</td><td><button class="btn btn-sm btn-outline-primary" onclick="openComplaint(${r.complaint_id})">View</button></td></tr>`).join(''):`<tr class="empty-row"><td colspan="6">None.</td></tr>`}
+        </tbody></table></div></div></div>`);
   } else {
     const rows = run(`SELECT c.*, r.name AS region_name, d.name AS dept_name, cu.full_name AS citizen_name,
         COALESCE(sev.rank,0) AS region_rank, COALESCE(sev.level,'Low') AS region_level
@@ -762,20 +603,21 @@ VIEWS.complaints = function() {
         ON l.region_id=hp.region_id AND l.mx=hp.predicted_at) lp ON lp.region_id=c.region_id
       LEFT JOIN HeatwaveSeverity sev ON sev.severity_id=lp.severity_id
       ORDER BY (c.status='Resolved') ASC, region_rank DESC, c.created_at ASC`);
-    app(`<h3 class="mb-3">Complaints</h3>
-      <div class="card"><div class="card-body"><h5>All Complaints <span class="small text-muted">(severity-prioritised: high-risk regions first)</span></h5>
-        <table class="table table-hover align-middle"><thead><tr><th>#</th><th>Region</th><th>Risk</th><th>Citizen</th><th>Category</th><th>Status</th><th>Dept</th><th></th></tr></thead><tbody>
-        ${rows.map(c=>`<tr><td>${c.complaint_id}</td><td>${esc(c.region_name)}</td><td>${sevBadge(c.region_level)}</td><td>${esc(c.citizen_name)}</td><td>${esc(c.category)}</td><td>${statusBadge(c.status)}</td><td class="small">${esc(c.dept_name||'-')}</td><td><button class="btn btn-sm btn-outline-primary" onclick="openComplaint(${c.complaint_id})">View</button></td></tr>`).join('')}
-        </tbody></table></div></div>`);
+    app(`${pageHead('Module 5', 'Complaints')}
+      <div class="card"><div class="card-body"><h5 class="card-title">All Complaints <span class="small text-muted">(severity-prioritised: high-risk regions first)</span></h5>
+        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th class="num">#</th><th>Region</th><th>Risk</th><th>Citizen</th><th>Category</th><th>Status</th><th>Dept</th><th></th></tr></thead><tbody>
+        ${rows.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.region_name)}</td><td>${sevBadge(c.region_level)}</td><td>${esc(c.citizen_name)}</td><td>${esc(c.category)}</td><td>${statusBadge(c.status)}</td><td class="small">${esc(c.dept_name||'-')}</td><td><button class="btn btn-sm btn-outline-primary" onclick="openComplaint(${c.complaint_id})">View</button></td></tr>`).join('')}
+        </tbody></table></div></div></div>`);
   }
 };
 function addComplaint() {
   const c = citizenOf(currentUser.user_id);
   const cat = document.getElementById('c_cat').value;
   const desc = document.getElementById('c_desc').value.trim();
-  if (!desc) { alert("Please describe the issue."); return; }
+  if (!desc) { notice("Please describe the issue.", "warning"); return; }
   exec("INSERT INTO Complaint (citizen_id,region_id,category,description) VALUES (?,?,?,?)",[c.citizen_id,c.region_id,cat,desc]);
   VIEWS.complaints();
+  notice("Complaint submitted.", "success");
 }
 function openComplaint(id) {
   const c = one(`SELECT c.*, r.name AS region_name, d.name AS dept_name, cu.full_name AS citizen_name, ou.full_name AS officer_name
@@ -788,30 +630,32 @@ function openComplaint(id) {
   const canManage = currentUser.role !== 'Citizen';
   const depts = run("SELECT * FROM GovernmentDepartment ORDER BY name");
   const officers = run("SELECT o.officer_id, u.full_name, d.name AS dept_name FROM Officer o JOIN User u ON u.user_id=o.user_id JOIN GovernmentDepartment d ON d.dept_id=o.dept_id ORDER BY u.full_name");
-  app(`<a class="small" onclick="go('complaints')" style="cursor:pointer">&larr; Back to complaints</a>
-    <h3 class="mt-2 mb-3">Complaint #${c.complaint_id}</h3>
+  app(`<a class="small" href="#" onclick="go('complaints');return false;">&larr; Back to complaints</a>
+    ${pageHead('Module 5 / 6', 'Complaint #' + c.complaint_id)}
     <div class="row g-3"><div class="col-md-7"><div class="card"><div class="card-body">
-      <h5>${esc(c.category)} ${statusBadge(c.status)}</h5><p>${esc(c.description)}</p>
+      <h5 class="card-title">${esc(c.category)} ${statusBadge(c.status)}</h5><p>${esc(c.description)}</p>
       <table class="table table-sm">
         <tr><th>Region</th><td>${esc(c.region_name)}</td></tr>
         <tr><th>Filed by</th><td>${esc(c.citizen_name)}</td></tr>
         <tr><th>Department</th><td>${esc(c.dept_name||'Not assigned')}</td></tr>
         <tr><th>Officer</th><td>${esc(c.officer_name||'Not assigned')}</td></tr>
-        <tr><th>Created</th><td>${c.created_at}</td></tr><tr><th>Resolved</th><td>${c.resolved_at||'-'}</td></tr>
+        <tr><th>Created</th><td class="mono" title="${c.created_at}">${fmtDate(c.created_at)}</td></tr>
+        <tr><th>Resolved</th><td class="mono" title="${c.resolved_at||''}">${c.resolved_at?fmtDate(c.resolved_at):'-'}</td></tr>
       </table></div></div></div>
       ${canManage?`<div class="col-md-5">
-        <div class="card mb-3"><div class="card-body"><h6>Assign</h6>
-          <label class="form-label small">Department</label>
+        <div class="card mb-3"><div class="card-body"><h6 class="card-title">Assign</h6>
+          <label class="form-label">Department</label>
           <select id="a_dept" class="form-select form-select-sm mb-2"><option value="">-- none --</option>${depts.map(d=>`<option value="${d.dept_id}" ${c.dept_id==d.dept_id?'selected':''}>${esc(d.name)}</option>`).join('')}</select>
-          <label class="form-label small">Officer</label>
+          <label class="form-label">Officer</label>
           <select id="a_off" class="form-select form-select-sm mb-2"><option value="">-- none --</option>${officers.map(o=>`<option value="${o.officer_id}" ${c.assigned_officer_id==o.officer_id?'selected':''}>${esc(o.full_name)} (${esc(o.dept_name)})</option>`).join('')}</select>
           <button class="btn btn-sm btn-primary" onclick="assignComplaint(${c.complaint_id})">Update Assignment</button>
         </div></div>
-        <div class="card"><div class="card-body"><h6>Update Status</h6>
-          <div class="d-flex gap-2"><select id="a_status" class="form-select form-select-sm">
+        <div class="card"><div class="card-body"><h6 class="card-title">Update Status</h6>
+          <label class="form-label" for="a_status">Status</label>
+          <div class="d-flex gap-2 align-items-end"><select id="a_status" class="form-select form-select-sm">
             ${['Open','In Progress','Resolved'].map(s=>`<option ${c.status==s?'selected':''}>${s}</option>`).join('')}</select>
             <button class="btn btn-sm btn-success" onclick="updateStatus(${c.complaint_id})">Save</button></div>
-          <p class="small text-muted mt-2 mb-0">Workflow: Open → In Progress → Resolved</p>
+          <p class="small text-muted mt-2 mb-0">Workflow: Open &rarr; In Progress &rarr; Resolved</p>
         </div></div></div>`:''}
     </div>`);
 }
@@ -820,60 +664,67 @@ function assignComplaint(id) {
   const off = document.getElementById('a_off').value || null;
   exec("UPDATE Complaint SET dept_id=?, assigned_officer_id=? WHERE complaint_id=?",[dept,off,id]);
   openComplaint(id);
+  notice("Complaint assignment updated.", "success");
 }
 function updateStatus(id) {
   const s = document.getElementById('a_status').value;
   if (s==='Resolved') exec("UPDATE Complaint SET status=?, resolved_at=datetime('now') WHERE complaint_id=?",[s,id]);
   else exec("UPDATE Complaint SET status=?, resolved_at=NULL WHERE complaint_id=?",[s,id]);
   openComplaint(id);
+  notice(`Complaint status updated to ${s}.`, "success");
 }
 
 VIEWS.reports = function() {
   const summary = run("SELECT * FROM v_region_complaint_summary ORDER BY total_complaints DESC");
   const risk = regionRisk();
   const active = run("SELECT wa.*, r.name AS region_name, s.level, s.rank FROM WarningAlert wa JOIN Region r ON r.region_id=wa.region_id JOIN HeatwaveSeverity s ON s.severity_id=wa.severity_id WHERE wa.is_active=1 ORDER BY s.rank DESC, wa.issued_at DESC");
-  app(`<h3 class="mb-3">Dashboard &amp; Reports</h3>
+  app(`${pageHead('Module 7', 'Dashboard & Reports')}
     <div class="row g-3 mb-3">
-      <div class="col-md-6"><div class="card"><div class="card-body"><h6>Complaints by Status</h6><canvas id="ch1" height="180"></canvas></div></div></div>
-      <div class="col-md-6"><div class="card"><div class="card-body"><h6>Complaints by Region</h6><canvas id="ch2" height="180"></canvas></div></div></div>
-      <div class="col-md-6"><div class="card"><div class="card-body"><h6>Prediction Severity Distribution</h6><canvas id="ch3" height="180"></canvas></div></div></div>
-      <div class="col-md-6"><div class="card"><div class="card-body"><h6>Predictions Trend (per day)</h6><canvas id="ch4" height="180"></canvas></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Status</h6><div class="chartbox"><canvas id="ch1"></canvas></div></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Region</h6><div class="chartbox"><canvas id="ch2"></canvas></div></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Prediction Severity Distribution</h6><div class="chartbox"><canvas id="ch3"></canvas></div></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Predictions Trend (per day)</h6><div class="chartbox"><canvas id="ch4"></canvas></div></div></div></div>
     </div>
     <div class="row g-3">
-      <div class="col-md-6"><div class="card"><div class="card-body"><h6>Region Risk Levels</h6>
-        ${risk.map(r=>`<div class="card risk-card risk-${r.level==='No data'?'Low':r.level} mb-2"><div class="card-body py-2 d-flex justify-content-between"><span>${esc(r.region_name)}${r.temperature!=null?` <span class="small text-muted">— ${r.temperature} °C</span>`:''}</span>${sevBadge(r.level)}</div></div>`).join('')}
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Region Risk Levels</h6>
+        <div class="risk-list">
+        ${risk.map(r=>`<div class="risk-row" data-level="${r.level==='No data'?'Low':r.level}"><span>${esc(r.region_name)}${r.temperature!=null?` <span class="small text-muted">— ${r.temperature} °C</span>`:''}</span>${sevBadge(r.level)}</div>`).join('')}
+        </div>
       </div></div></div>
-      <div class="col-md-6"><div class="card"><div class="card-body"><h6>Active Alerts</h6>
-        <table class="table table-sm"><thead><tr><th>Region</th><th>Severity</th><th>Issued</th></tr></thead><tbody>
-        ${active.length?active.map(a=>`<tr><td>${esc(a.region_name)}</td><td>${sevBadge(a.level)}</td><td class="small text-muted">${a.issued_at}</td></tr>`).join(''):`<tr><td colspan="3" class="text-muted">No active alerts.</td></tr>`}
-        </tbody></table></div></div></div>
+      <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Active Alerts</h6>
+        <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Region</th><th>Severity</th><th>Issued</th></tr></thead><tbody>
+        ${active.length?active.map(a=>`<tr><td>${esc(a.region_name)}</td><td>${sevBadge(a.level)}</td><td class="small text-muted mono" title="${a.issued_at}">${fmtDate(a.issued_at)}</td></tr>`).join(''):`<tr class="empty-row"><td colspan="3">No active alerts.</td></tr>`}
+        </tbody></table></div></div></div></div>
     </div>`);
   drawCharts();
 };
 let charts = [];
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function drawCharts() {
   charts.forEach(c=>c.destroy()); charts=[];
-  Chart.defaults.color = '#aab4d4';
-  Chart.defaults.borderColor = 'rgba(120,140,200,.15)';
-  Chart.defaults.font.family = 'Inter, sans-serif';
-  const SEV = {Low:'#12b981',Moderate:'#f59e0b',High:'#f97316',Extreme:'#f43f5e'};
+  Chart.defaults.color = cssVar('--muted');
+  Chart.defaults.borderColor = cssVar('--rule');
+  Chart.defaults.font.family = 'IBM Plex Sans, system-ui, sans-serif';
+  const SEV = {Low:cssVar('--sev-low'),Moderate:cssVar('--sev-moderate'),High:cssVar('--sev-high'),Extreme:cssVar('--sev-extreme')};
+  const STATUS_COLORS = [cssVar('--status-open'),cssVar('--status-progress'),cssVar('--status-resolved')];
+  const ACCENT = cssVar('--accent');
+  const chartOpts = { responsive:true, maintainAspectRatio:false };
   const st = {}; run("SELECT status, COUNT(*) c FROM Complaint GROUP BY status").forEach(r=>st[r.status]=r.c);
-  charts.push(new Chart(ch1,{type:'pie',data:{labels:['Open','In Progress','Resolved'],datasets:[{data:[st.Open||0,st['In Progress']||0,st.Resolved||0],backgroundColor:['#6c757d','#ffc107','#198754']}]}}));
+  charts.push(new Chart(ch1,{type:'pie',data:{labels:['Open','In Progress','Resolved'],datasets:[{data:[st.Open||0,st['In Progress']||0,st.Resolved||0],backgroundColor:STATUS_COLORS}]},options:chartOpts}));
   const rg = run("SELECT region_name, total_complaints FROM v_region_complaint_summary ORDER BY total_complaints DESC");
-  charts.push(new Chart(ch2,{type:'bar',data:{labels:rg.map(r=>r.region_name),datasets:[{label:'Complaints',data:rg.map(r=>r.total_complaints),backgroundColor:'#ff5722'}]},options:{plugins:{legend:{display:false}}}}));
+  charts.push(new Chart(ch2,{type:'bar',data:{labels:rg.map(r=>r.region_name),datasets:[{label:'Complaints',data:rg.map(r=>r.total_complaints),backgroundColor:ACCENT}]},options:{...chartOpts,plugins:{legend:{display:false}}}}));
   const sv = run("SELECT s.level, COUNT(hp.prediction_id) c FROM HeatwaveSeverity s LEFT JOIN HeatwavePrediction hp ON hp.severity_id=s.severity_id GROUP BY s.level, s.rank ORDER BY s.rank");
-  charts.push(new Chart(ch3,{type:'bar',data:{labels:sv.map(r=>r.level),datasets:[{label:'Predictions',data:sv.map(r=>r.c),backgroundColor:sv.map(r=>SEV[r.level]||'#999')}]},options:{plugins:{legend:{display:false}}}}));
+  charts.push(new Chart(ch3,{type:'bar',data:{labels:sv.map(r=>r.level),datasets:[{label:'Predictions',data:sv.map(r=>r.c),backgroundColor:sv.map(r=>SEV[r.level]||'#999')}]},options:{...chartOpts,plugins:{legend:{display:false}}}}));
   const tr = run("SELECT date(predicted_at) d, COUNT(*) c FROM HeatwavePrediction GROUP BY date(predicted_at) ORDER BY d");
-  charts.push(new Chart(ch4,{type:'line',data:{labels:tr.map(r=>r.d),datasets:[{label:'Predictions',data:tr.map(r=>r.c),borderColor:'#dc3545',backgroundColor:'rgba(220,53,69,.15)',fill:true,tension:.3}]}}));
+  charts.push(new Chart(ch4,{type:'line',data:{labels:tr.map(r=>r.d),datasets:[{label:'Predictions',data:tr.map(r=>r.c),borderColor:ACCENT,backgroundColor:ACCENT+'26',fill:true,tension:.3}]},options:chartOpts}));
 }
 
 VIEWS.dbadmin = function() {
   const tables = ["User","Region","HeatwaveSeverity","GovernmentDepartment","Citizen","Officer","Administrator","WeatherStation","WeatherObservation","HeatwavePrediction","Advisory","WarningAlert","Complaint","Notification"];
-  app(`<h3 class="mb-1">Database Administration</h3>
-    <p class="text-muted small">Table row counts and CSV export (basic backup feature).</p>
-    <div class="card"><div class="card-body"><table class="table table-hover align-middle"><thead><tr><th>Table</th><th>Row count</th><th>Export</th></tr></thead><tbody>
-    ${tables.map(t=>`<tr><td><code>${t}</code></td><td>${one("SELECT COUNT(*) c FROM "+t).c}</td><td><button class="btn btn-sm btn-outline-success" onclick="exportCSV('${t}')">Download CSV</button></td></tr>`).join('')}
-    </tbody></table></div></div>`);
+  app(`${pageHead('Module 8', 'Database Administration', 'Table row counts and CSV export (basic backup feature).')}
+    <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Table</th><th class="num">Row count</th><th>Export</th></tr></thead><tbody>
+    ${tables.map(t=>`<tr><td><code>${t}</code></td><td class="num">${one("SELECT COUNT(*) c FROM "+t).c}</td><td><button class="btn btn-sm btn-outline-success" onclick="exportCSV('${t}')">Download CSV</button></td></tr>`).join('')}
+    </tbody></table></div></div></div>`);
 };
 function exportCSV(table) {
   const rows = run("SELECT * FROM "+table);
@@ -886,9 +737,9 @@ function exportCSV(table) {
 }
 
 VIEWS.sql = function() {
-  app(`<h3 class="mb-1">SQL Console</h3>
-    <p class="text-muted small">Run any SQL against the in-browser SQLite database — great for demonstrating the schema, the view, and the trigger live in your viva. (e.g. <code>SELECT * FROM v_region_complaint_summary;</code>)</p>
+  app(`${pageHead('Module 8', 'SQL Console', 'Run any SQL against the in-browser SQLite database &mdash; great for demonstrating the schema, the view, and the trigger live in a viva.')}
     <div class="card mb-3"><div class="card-body">
+      <label class="form-label" for="sqlbox">Statement</label>
       <textarea id="sqlbox" class="form-control font-monospace" rows="4">SELECT * FROM v_region_complaint_summary;</textarea>
       <div class="mt-2 d-flex gap-2 flex-wrap">
         <button class="btn btn-sm btn-primary" onclick="runSQL()">Run</button>
@@ -905,7 +756,7 @@ function runSQL() {
   const out = document.getElementById('sqlresult');
   try {
     const res = db.exec(q);
-    if (!res.length) { out.innerHTML = `<div class="alert alert-success">Statement executed. No rows returned.</div>`; if(/insert|update|delete|create|drop/i.test(q)) {} return; }
+    if (!res.length) { out.innerHTML = `<div class="alert alert-success">Statement executed. No rows returned.</div>`; return; }
     const {columns, values} = res[0];
     out.innerHTML = `<div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-sm"><thead><tr>${columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${values.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="small text-muted mb-0">${values.length} row(s).</p></div></div>`;
   } catch(e) {
@@ -914,15 +765,55 @@ function runSQL() {
 }
 
 // ---- Small UI helpers ----
-function statCard(n,label,cls=''){ return `<div class="col-6 col-md-3"><div class="card text-center"><div class="card-body"><div class="display-6 ${cls}">${n}</div><div class="text-muted">${label}</div></div></div></div>`; }
-function statusBadge(s){ return s==='Open'?'<span class="badge bg-secondary">Open</span>':s==='In Progress'?'<span class="badge bg-warning text-dark">In Progress</span>':'<span class="badge bg-success">Resolved</span>'; }
-function summaryCard(summary,short){ return `<div class="card"><div class="card-body"><h5>Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
-  <table class="table table-sm"><thead><tr><th>Region</th><th>Total</th><th>Open</th><th>${short?'In Prog.':'In Progress'}</th><th>Resolved</th></tr></thead><tbody>
-  ${summary.map(s=>`<tr><td>${esc(s.region_name)}</td><td>${s.total_complaints}</td><td>${s.open_complaints}</td><td>${s.in_progress_complaints}</td><td>${s.resolved_complaints}</td></tr>`).join('')}
-  </tbody></table></div></div>`; }
+function pageHead(eyebrow, title, lede) {
+  return `<div class="page-head"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${lede?`<p class="lede">${lede}</p>`:''}</div>`;
+}
+function statCard(n,label,isAlert){ return `<div class="col-6 col-md-3"><div class="stat"><div class="stat-figure${isAlert?' alert':''}">${n}</div><div class="stat-label">${label}</div></div></div>`; }
+function statusBadge(s){ return `<span class="status-tag" data-status="${s}">${s}</span>`; }
+function summaryCard(summary,short){ return `<div class="card h-100"><div class="card-body"><h5 class="card-title">Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
+  <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Region</th><th class="num">Total</th><th class="num">Open</th><th class="num">${short?'In Prog.':'In Progress'}</th><th class="num">Resolved</th></tr></thead><tbody>
+  ${summary.map(s=>`<tr><td>${esc(s.region_name)}</td><td class="num">${s.total_complaints}</td><td class="num">${s.open_complaints}</td><td class="num">${s.in_progress_complaints}</td><td class="num">${s.resolved_complaints}</td></tr>`).join('')}
+  </tbody></table></div></div></div>`; }
 function regionRisk(){ return run(`SELECT r.region_id, r.name AS region_name, COALESCE(s.level,'No data') AS level, COALESCE(s.rank,0) AS rank, hp.temperature
   FROM Region r LEFT JOIN (SELECT hp.* FROM HeatwavePrediction hp JOIN (SELECT region_id, MAX(predicted_at) mx FROM HeatwavePrediction GROUP BY region_id) l ON l.region_id=hp.region_id AND l.mx=hp.predicted_at) hp ON hp.region_id=r.region_id
   LEFT JOIN HeatwaveSeverity s ON s.severity_id=hp.severity_id ORDER BY rank DESC, r.name`); }
+
+// ---- fmtDate: mirrors the `when` Jinja filter in app.py, so both
+// frontends show the same relative/absolute timestamp style. ----
+function fmtDate(value) {
+  if (!value) return '-';
+  // SQLite's datetime('now') is UTC with no 'T'/'Z'; add them so every
+  // browser's Date parser reads it as UTC instead of guessing local time.
+  const dt = new Date(value.replace(' ', 'T') + 'Z');
+  if (isNaN(dt.getTime())) return value;
+  const seconds = (Date.now() - dt.getTime()) / 1000;
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return Math.floor(seconds/60) + ' min ago';
+  if (seconds < 86400) return Math.floor(seconds/3600) + ' hr ago';
+  if (seconds < 7*86400) { const d = Math.floor(seconds/86400); return d===1 ? '1 day ago' : d+' days ago'; }
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let out = `${dt.getDate()} ${months[dt.getMonth()]}`;
+  if (dt.getFullYear() !== new Date().getFullYear()) out += ` ${dt.getFullYear()}`;
+  const hh = String(dt.getHours()).padStart(2,'0'), mm = String(dt.getMinutes()).padStart(2,'0');
+  return `${out}, ${hh}:${mm}`;
+}
+
+// ---- notice: a fixed-position banner matching the Flask flash look,     ----
+// ---- replacing alert() so the demo doesn't block on native dialogs.    ----
+let noticeTimer = null;
+function notice(message, kind='info') {
+  let el = document.getElementById('notice');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'notice';
+    document.body.appendChild(el);
+  }
+  el.className = `notice-banner alert alert-${kind}`;
+  el.textContent = message;
+  el.style.display = 'block';
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => { el.style.display = 'none'; }, 3200);
+}
 
 // ---- Boot ----
 initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/"+f })

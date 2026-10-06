@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 {% block title %}Notifications{% endblock %}
 {% block content %}
-<h3 class="mb-3">Notifications</h3>
+{{ page_head("Inbox", "Notifications") }}
 <div class="card"><div class="card-body">
   {% if notifications %}
     <ul class="list-group list-group-flush">
       {% for n in notifications %}
       <li class="list-group-item {{ '' if n.is_read else 'fw-bold' }}">
         {{ n.message }}
-        <div class="small text-muted">{{ n.created_at }}</div>
+        <div class="small text-muted mono" title="{{ n.created_at }}">{{ n.created_at | when }}</div>
       </li>
       {% endfor %}
     </ul>

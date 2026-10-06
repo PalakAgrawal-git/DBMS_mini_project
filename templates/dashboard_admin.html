@@ -1,65 +1,70 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head, sev_tag %}
 {% block title %}Administrator Dashboard{% endblock %}
 {% block content %}
-<h3 class="mb-3">Administrator Dashboard</h3>
+{{ page_head("Overview", "Administrator Dashboard") }}
 
 <div class="row g-3 mb-3">
   <div class="col-6 col-md-3">
-    <div class="card text-center"><div class="card-body">
-      <div class="display-6">{{ counts.regions }}</div><div class="text-muted">Regions</div>
-    </div></div>
+    <div class="stat">
+      <div class="stat-figure">{{ counts.regions }}</div>
+      <div class="stat-label">Regions</div>
+    </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center"><div class="card-body">
-      <div class="display-6">{{ counts.users }}</div><div class="text-muted">Users</div>
-    </div></div>
+    <div class="stat">
+      <div class="stat-figure">{{ counts.users }}</div>
+      <div class="stat-label">Users</div>
+    </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center"><div class="card-body">
-      <div class="display-6">{{ counts.complaints }}</div><div class="text-muted">Complaints</div>
-    </div></div>
+    <div class="stat">
+      <div class="stat-figure">{{ counts.complaints }}</div>
+      <div class="stat-label">Complaints</div>
+    </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center"><div class="card-body">
-      <div class="display-6 text-danger">{{ counts.active_alerts }}</div><div class="text-muted">Active Alerts</div>
-    </div></div>
+    <div class="stat">
+      <div class="stat-figure alert">{{ counts.active_alerts }}</div>
+      <div class="stat-label">Active Alerts</div>
+    </div>
   </div>
 </div>
 
 <div class="row g-3">
   <div class="col-md-6">
-    <div class="card">
+    <div class="card h-100">
       <div class="card-body">
         <h5 class="card-title">Region Risk Levels</h5>
-        {% for r in risk %}
-        <div class="card risk-card risk-{{ r.level }} mb-2">
-          <div class="card-body py-2 d-flex justify-content-between align-items-center">
-            <div>
+        <div class="risk-list">
+          {% for r in risk %}
+          <div class="risk-row" data-level="{{ r.level if r.level != 'No data' else 'Low' }}">
+            <div class="risk-row-main">
               <strong>{{ r.region_name }}</strong>
               {% if r.temperature is not none %}
-              <span class="small text-muted">&mdash; {{ r.temperature }} &deg;C</span>
+              <span class="muted">&mdash; {{ r.temperature }} &deg;C</span>
               {% endif %}
             </div>
-            <span class="sev-badge sev-{{ r.level if r.level != 'No data' else 'Low' }}">{{ r.level }}</span>
+            {{ sev_tag(r.level) }}
           </div>
+          {% endfor %}
         </div>
-        {% endfor %}
       </div>
     </div>
   </div>
 
   <div class="col-md-6">
-    <div class="card">
+    <div class="card h-100">
       <div class="card-body">
         <h5 class="card-title">Region-wise complaint summary <span class="small text-muted">(SQL view)</span></h5>
         <div class="table-responsive">
           <table class="table table-sm">
-            <thead><tr><th>Region</th><th>Total</th><th>Open</th><th>In Prog.</th><th>Resolved</th></tr></thead>
+            <thead><tr><th>Region</th><th class="num">Total</th><th class="num">Open</th><th class="num">In Prog.</th><th class="num">Resolved</th></tr></thead>
             <tbody>
               {% for s in summary %}
-              <tr><td>{{ s.region_name }}</td><td>{{ s.total_complaints }}</td>
-                  <td>{{ s.open_complaints }}</td><td>{{ s.in_progress_complaints }}</td>
-                  <td>{{ s.resolved_complaints }}</td></tr>
+              <tr><td>{{ s.region_name }}</td><td class="num">{{ s.total_complaints }}</td>
+                  <td class="num">{{ s.open_complaints }}</td><td class="num">{{ s.in_progress_complaints }}</td>
+                  <td class="num">{{ s.resolved_complaints }}</td></tr>
               {% endfor %}
             </tbody>
           </table>

@@ -1,0 +1,395 @@
+/*
+ * heatguard.css
+ * =============
+ * Shared stylesheet for both frontends: the Flask templates (served via
+ * url_for('static', ...)) and the static index.html demo (loaded as a
+ * relative path, which also works on GitHub Pages).
+ *
+ * Theme: "civic bulletin" -- paper background, a serif for titles, a plain
+ * sans for interface text, and a monospace for anything tabular (readings,
+ * IDs, timestamps). Layered on top of Bootstrap 5's grid and components;
+ * this file restyles rather than replaces them.
+ *
+ * Motion is deliberately minimal: the only transition anywhere is a 120ms
+ * colour fade on links and buttons. Nothing lifts, glows, pulses or shimmers.
+ */
+
+:root {
+  /* Surfaces */
+  --paper:   #f6f3ec;
+  --surface: #fffdf8;
+  --ink:     #1f1c18;
+  --muted:   #6a6258;
+  --rule:    #e2dbcf;
+  --accent:  #b8460e;
+
+  /* Severity */
+  --sev-low:      #3d7a4c;
+  --sev-moderate: #a8741a;
+  --sev-high:     #c2530f;
+  --sev-extreme:  #9e1c1c;
+
+  /* Complaint status: slate / ochre / green */
+  --status-open:     #5b6472;
+  --status-progress: var(--sev-moderate);
+  --status-resolved: var(--sev-low);
+
+  /* Type */
+  --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-sans:  'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-mono:  'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Base                                                                    */
+/* ---------------------------------------------------------------------- */
+html, body { background: var(--paper); color: var(--ink); }
+body { font-family: var(--font-sans); }
+a { color: var(--accent); text-decoration: none; transition: color .12s ease; }
+a:hover { color: #8f3509; text-decoration: underline; }
+code { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); padding: .1em .35em; border-radius: 3px; font-size: .9em; }
+hr { border-color: var(--rule); }
+::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* Keep wide content (tables, code) from pushing the page sideways. */
+.table-responsive { max-width: 100%; }
+
+/* ---------------------------------------------------------------------- */
+/* Navbar -- civic bulletin: light, bottom rule, underline on the active   */
+/* page. Use alongside Bootstrap's navbar-expand-xl + a real toggler.     */
+/* ---------------------------------------------------------------------- */
+.navbar-civic {
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+  padding-top: .6rem;
+  padding-bottom: .6rem;
+}
+.navbar-civic .navbar-brand {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--ink);
+  letter-spacing: .01em;
+}
+.navbar-civic .navbar-toggler {
+  border-color: var(--rule);
+  box-shadow: none;
+}
+.navbar-civic .navbar-toggler:focus { box-shadow: 0 0 0 .15rem color-mix(in srgb, var(--accent) 25%, transparent); }
+.navbar-civic .nav-link {
+  color: var(--muted);
+  white-space: nowrap;
+  position: relative;
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+}
+.navbar-civic .nav-link:hover { color: var(--ink); }
+.navbar-civic .nav-link.active { color: var(--ink); font-weight: 600; }
+.navbar-civic .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: .6rem; right: .6rem; bottom: 0;
+  height: 2px;
+  background: var(--accent);
+}
+.navbar-civic .badge.bg-danger { background: var(--sev-extreme) !important; }
+
+.navbar-user {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  padding: .3rem .75rem;
+}
+.navbar-user-name { font-weight: 600; color: var(--ink); font-size: .85rem; }
+.navbar-user-role { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+/* ---------------------------------------------------------------------- */
+/* Page head -- small eyebrow line + serif title, used on every page.     */
+/* ---------------------------------------------------------------------- */
+.page-head { margin-bottom: 1.6rem; }
+.page-head .eyebrow {
+  font-family: var(--font-sans);
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--accent);
+  margin: 0 0 .25rem;
+}
+.page-head h1 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.85rem;
+  color: var(--ink);
+  margin: 0;
+}
+.page-head .lede { color: var(--muted); font-size: .92rem; margin: .4rem 0 0; max-width: 60ch; }
+
+/* ---------------------------------------------------------------------- */
+/* Cards -- flat: 1px rule, 6px radius, no shadow, no hover lift.         */
+/* ---------------------------------------------------------------------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: none;
+}
+.card-title, .card-header { font-family: var(--font-serif); font-weight: 600; color: var(--ink); }
+.card-title { font-size: 1.05rem; }
+
+/* ---------------------------------------------------------------------- */
+/* Severity tag -- tinted background, dark text, small square marker.     */
+/* Usage: the sev_tag(level) macro in templates/_macros.html.             */
+/* ---------------------------------------------------------------------- */
+.sev-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: .4em;
+  padding: .18rem .55rem;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: .78rem;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.sev-tag-mark { width: .55em; height: .55em; border-radius: 1px; flex-shrink: 0; }
+.sev-tag[data-level="Low"]      { background: color-mix(in srgb, var(--sev-low) 14%, var(--surface));      color: var(--sev-low); }
+.sev-tag[data-level="Moderate"] { background: color-mix(in srgb, var(--sev-moderate) 14%, var(--surface)); color: var(--sev-moderate); }
+.sev-tag[data-level="High"]     { background: color-mix(in srgb, var(--sev-high) 14%, var(--surface));     color: var(--sev-high); }
+.sev-tag[data-level="Extreme"]  { background: color-mix(in srgb, var(--sev-extreme) 14%, var(--surface));  color: var(--sev-extreme); }
+.sev-tag[data-level="No data"]  { background: var(--paper); color: var(--muted); }
+.sev-tag[data-level="No data"] .sev-tag-mark { background: var(--muted); }
+.sev-tag[data-level="Low"]      .sev-tag-mark { background: var(--sev-low); }
+.sev-tag[data-level="Moderate"] .sev-tag-mark { background: var(--sev-moderate); }
+.sev-tag[data-level="High"]     .sev-tag-mark { background: var(--sev-high); }
+.sev-tag[data-level="Extreme"]  .sev-tag-mark { background: var(--sev-extreme); }
+
+/* ---------------------------------------------------------------------- */
+/* Status tag -- complaint status: slate / ochre / green.                 */
+/* Usage: the status_tag(status) macro.                                   */
+/* ---------------------------------------------------------------------- */
+.status-tag {
+  display: inline-block;
+  padding: .18rem .55rem;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: .78rem;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.status-tag[data-status="Open"]        { background: color-mix(in srgb, var(--status-open) 14%, var(--surface));     color: var(--status-open); }
+.status-tag[data-status="In Progress"] { background: color-mix(in srgb, var(--status-progress) 14%, var(--surface)); color: var(--status-progress); }
+.status-tag[data-status="Resolved"]    { background: color-mix(in srgb, var(--status-resolved) 14%, var(--surface)); color: var(--status-resolved); }
+
+/* ---------------------------------------------------------------------- */
+/* Risk row -- a flat list row with a coloured left bar, replacing the    */
+/* old pattern of a severity-coloured card nested inside another card.    */
+/* ---------------------------------------------------------------------- */
+.risk-list { border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.risk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .6rem .85rem;
+  border-left: 3px solid var(--rule);
+  background: var(--surface);
+}
+.risk-row + .risk-row { border-top: 1px solid var(--rule); }
+.risk-row[data-level="Low"]      { border-left-color: var(--sev-low); }
+.risk-row[data-level="Moderate"] { border-left-color: var(--sev-moderate); }
+.risk-row[data-level="High"]     { border-left-color: var(--sev-high); }
+.risk-row[data-level="Extreme"]  { border-left-color: var(--sev-extreme); }
+.risk-row-main { color: var(--ink); }
+.risk-row-main .muted { color: var(--muted); font-size: .85rem; }
+
+/* ---------------------------------------------------------------------- */
+/* Stat figures -- plain large tabular numbers, replacing the gradient-   */
+/* text display-6 stat cards.                                             */
+/* ---------------------------------------------------------------------- */
+.stat {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  text-align: center;
+  height: 100%;
+}
+.stat-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 2.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+.stat-figure.alert { color: var(--sev-extreme); }
+.stat-label {
+  font-size: .76rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: .4rem;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Chart wrapper -- fixes mismatched chart heights (canvas height attr +  */
+/* Chart.js's default aspect ratio). Every chart gets the same box, and   */
+/* JS options use maintainAspectRatio:false + responsive:true.            */
+/* ---------------------------------------------------------------------- */
+.chartbox { position: relative; height: 240px; }
+.chartbox canvas { width: 100% !important; height: 100% !important; }
+
+/* ---------------------------------------------------------------------- */
+/* Tabular numbers -- IDs, readings and timestamps read in monospace with */
+/* lining figures so columns of digits line up.                          */
+/* ---------------------------------------------------------------------- */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.num  { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+td.num, th.num { text-align: right; }
+
+/* ---------------------------------------------------------------------- */
+/* Tables                                                                  */
+/* ---------------------------------------------------------------------- */
+.table { color: var(--ink); --bs-table-bg: transparent; }
+.table thead th {
+  font-family: var(--font-sans);
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  border-bottom-width: 1px;
+  border-color: var(--rule);
+}
+.table td { border-color: var(--rule); vertical-align: middle; }
+.table-hover tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.table .empty-row td { color: var(--muted); text-align: center; padding: 1.25rem .5rem; }
+
+/* ---------------------------------------------------------------------- */
+/* Buttons -- flat, only a colour transition.                             */
+/* ---------------------------------------------------------------------- */
+.btn {
+  border-radius: 4px;
+  font-weight: 500;
+  box-shadow: none !important;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover, .btn-primary:focus { background: #9c3b0b; border-color: #9c3b0b; color: #fff; }
+.btn-outline-primary { color: var(--accent); border-color: var(--accent); }
+.btn-outline-primary:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-success { background: var(--sev-low); border-color: var(--sev-low); }
+.btn-success:hover { background: #2f5f3b; border-color: #2f5f3b; }
+.btn-outline-danger { color: var(--sev-extreme); border-color: var(--sev-extreme); }
+.btn-outline-danger:hover { background: var(--sev-extreme); border-color: var(--sev-extreme); color: #fff; }
+.btn-outline-secondary { color: var(--muted); border-color: var(--rule); }
+.btn-outline-secondary:hover { background: var(--muted); border-color: var(--muted); color: #fff; }
+
+.btn:focus-visible, a:focus-visible, .form-control:focus-visible, .form-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.btn:focus, .form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 .18rem color-mix(in srgb, var(--accent) 22%, transparent) !important;
+  border-color: var(--accent) !important;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Forms -- real labels, inputs matched to the palette, buttons aligned   */
+/* to input baselines via align-items-end on the row.                    */
+/* ---------------------------------------------------------------------- */
+.form-label { font-size: .82rem; font-weight: 600; color: var(--ink); margin-bottom: .3rem; }
+.form-control, .form-select {
+  border-color: var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 4px;
+}
+.form-control::placeholder { color: var(--muted); opacity: .8; }
+
+/* ---------------------------------------------------------------------- */
+/* Flash / notice banners -- tinted by the same severity tokens.          */
+/* ---------------------------------------------------------------------- */
+.alert { border-radius: 5px; border-width: 1px; }
+.alert-success { background: color-mix(in srgb, var(--sev-low) 10%, var(--surface));      border-color: color-mix(in srgb, var(--sev-low) 35%, var(--rule));      color: var(--sev-low); }
+.alert-warning { background: color-mix(in srgb, var(--sev-moderate) 10%, var(--surface)); border-color: color-mix(in srgb, var(--sev-moderate) 35%, var(--rule)); color: var(--sev-moderate); }
+.alert-danger  { background: color-mix(in srgb, var(--sev-extreme) 10%, var(--surface));  border-color: color-mix(in srgb, var(--sev-extreme) 35%, var(--rule));  color: var(--sev-extreme); }
+.alert-info    { background: color-mix(in srgb, var(--status-open) 10%, var(--surface));  border-color: color-mix(in srgb, var(--status-open) 35%, var(--rule));  color: var(--status-open); }
+
+/* The demo has no Flask flash system, so JS banners use this instead --  */
+/* same look, fixed to the top of the viewport.                          */
+.notice-banner {
+  position: fixed;
+  top: 1rem; left: 50%;
+  transform: translateX(-50%);
+  z-index: 1080;
+  min-width: 280px;
+  max-width: 90vw;
+  padding: .65rem 1rem;
+  box-shadow: 0 4px 14px rgba(31, 28, 24, .12);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Login / account picker (demo landing + any future Flask equivalent)    */
+/* ---------------------------------------------------------------------- */
+.hero { padding: 2rem 0 1.1rem; text-align: center; }
+.hero .eyebrow {
+  font-family: var(--font-sans); font-size: .75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .16em; color: var(--accent); margin: 0 0 .5rem;
+}
+.hero h1 { font-family: var(--font-serif); font-weight: 600; font-size: 2.3rem; color: var(--ink); margin: 0 0 .5rem; }
+.hero p { color: var(--muted); max-width: 620px; margin: 0 auto; line-height: 1.6; }
+
+.account-section { max-width: 760px; margin: 1.5rem auto 0; }
+.account-group-label {
+  font-family: var(--font-sans); font-size: .72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--muted); margin: 1.25rem 0 .5rem;
+}
+.account-group-label:first-child { margin-top: 0; }
+.account-row {
+  display: flex; align-items: center; gap: .85rem;
+  padding: .7rem .9rem; border: 1px solid var(--rule); border-radius: 5px;
+  background: var(--surface); cursor: pointer; margin-bottom: .5rem;
+  transition: border-color .12s ease;
+}
+.account-row:hover { border-color: var(--accent); }
+.account-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.account-avatar {
+  width: 38px; height: 38px; border-radius: 4px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 600; font-size: .85rem; color: #fff;
+}
+.account-avatar.adm { background: var(--sev-extreme); }
+.account-avatar.off { background: var(--sev-high); }
+.account-avatar.cit { background: var(--status-open); }
+.account-meta { flex: 1; min-width: 0; }
+.account-name { font-weight: 600; color: var(--ink); }
+.account-handle { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
+.account-desc { font-size: .78rem; color: var(--muted); }
+.account-role {
+  font-size: .7rem; font-weight: 600; padding: .22rem .55rem; border-radius: 999px;
+  border: 1px solid var(--rule); color: var(--muted); flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Footer                                                                  */
+/* ---------------------------------------------------------------------- */
+.site-footer { border-top: 1px solid var(--rule); color: var(--muted); font-size: .82rem; }
+.site-footer a { color: var(--muted); text-decoration: underline; }
+
+/* ---------------------------------------------------------------------- */
+/* Loading screen (demo only)                                             */
+/* ---------------------------------------------------------------------- */
+#loading {
+  position: fixed; inset: 0; background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-family: var(--font-sans); font-size: .95rem;
+}
+
+/* Respect reduced-motion preferences for the one transition we keep. */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

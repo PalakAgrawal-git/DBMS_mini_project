@@ -18,6 +18,7 @@ import csv
 import io
 import os
 import sqlite3
+from datetime import datetime
 from functools import wraps
 
 from flask import (Flask, g, redirect, render_template, request, session,
@@ -31,6 +32,45 @@ DATABASE = os.path.join(BASE_DIR, "heatwave.db")
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "heatwave-dev-secret-key-change-in-prod"
+
+
+@app.template_filter("when")
+def when(value):
+    """
+    Format a 'YYYY-MM-DD HH:MM:SS' timestamp as relative time if it's recent,
+    otherwise as a short absolute date -- so templates stop printing the raw
+    SQLite string. Always paired with a title="{{ value }}" attribute in the
+    template, so the exact timestamp is still one hover away.
+
+    SQLite's datetime('now') is UTC, so "now" here is utcnow() too -- using
+    local time would skew every relative timestamp by the server's UTC offset.
+    """
+    if not value:
+        return "-"
+    try:
+        dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return value
+
+    delta = datetime.utcnow() - dt
+    seconds = delta.total_seconds()
+    if seconds < 60:
+        return "just now"
+    if seconds < 3600:
+        mins = int(seconds // 60)
+        return f"{mins} min ago"
+    if seconds < 86400:
+        hours = int(seconds // 3600)
+        return f"{hours} hr ago"
+    if seconds < 7 * 86400:
+        days = int(seconds // 86400)
+        return f"{days} day ago" if days == 1 else f"{days} days ago"
+
+    # dt.day avoids the %-d / %#d platform split between Linux and Windows.
+    date_part = f"{dt.day} {dt.strftime('%b')}"
+    if dt.year != datetime.utcnow().year:
+        date_part += f" {dt.year}"
+    return f"{date_part}, {dt.strftime('%H:%M')}"
 
 # Tables the Database Administration page is allowed to count / export.
 ADMIN_TABLES = [
@@ -134,9 +174,7 @@ def severity_lookup():
     return out
 
 
-# ===========================================================================
-# Module 1 -- User Management (register / login / logout)
-# ===========================================================================
+# --- user management (register / login / logout) -- Module 1 --------------
 @app.route("/")
 def index():
     if session.get("user_id"):
@@ -303,9 +341,7 @@ def dashboard():
     return render_template("dashboard_admin.html", counts=counts, summary=summary, risk=risk)
 
 
-# ===========================================================================
-# Module 2 -- Weather Monitoring (WeatherStation + WeatherObservation CRUD)
-# ===========================================================================
+# --- weather monitoring (station + observation CRUD) -- Module 2 ----------
 @app.route("/weather")
 @login_required
 def weather():
@@ -368,10 +404,9 @@ def add_observation():
     return redirect(url_for("weather"))
 
 
-# ===========================================================================
-# Module 3 -- AI Heatwave Prediction (rule-based expert system)
-# Module 4 -- Early Warning & Advisory (WarningAlert via DB trigger)
-# ===========================================================================
+# --- prediction + early warning -- Modules 3 & 4 ---------------------------
+# Module 3 is the rule-based expert system below; Module 4 is the
+# WarningAlert it triggers (auto-created by the DB, not this code).
 def run_prediction_for_region(region_id, obs_id, temperature, humidity, wind_speed):
     """
     Run the rule-based expert system and write a HeatwavePrediction row.
@@ -446,14 +481,12 @@ def alerts():
                JOIN HeatwaveSeverity s ON s.severity_id = wa.severity_id
                WHERE wa.region_id = ? AND wa.is_active = 1
                ORDER BY wa.issued_at DESC""", (citizen["region_id"],))
-        region_id = citizen["region_id"]
     else:
         rows = query(
             """SELECT wa.*, r.name AS region_name, s.level FROM WarningAlert wa
                JOIN Region r ON r.region_id = wa.region_id
                JOIN HeatwaveSeverity s ON s.severity_id = wa.severity_id
                WHERE wa.is_active = 1 ORDER BY wa.issued_at DESC""")
-        region_id = None
 
     # Attach advisories per alert severity.
     alerts_with_adv = [{**dict(r), "advisories": advisories_for(r["level"])} for r in rows]
@@ -469,14 +502,11 @@ def deactivate_alert(alert_id):
     return redirect(url_for("alerts"))
 
 
-# ===========================================================================
-# Module 5 -- Complaint Management (citizen create/view)
-# ===========================================================================
+# --- complaint management (citizen create / view) -- Module 5 -------------
 @app.route("/complaints")
 @login_required
 def complaints():
     user = current_user()
-    departments = query("SELECT * FROM GovernmentDepartment ORDER BY name")
 
     if user["role"] == "Citizen":
         citizen = query("SELECT * FROM Citizen WHERE user_id = ?", (user["user_id"],), one=True)
@@ -487,7 +517,7 @@ def complaints():
                LEFT JOIN GovernmentDepartment d ON d.dept_id = c.dept_id
                WHERE c.citizen_id = ? ORDER BY c.created_at DESC""",
             (citizen["citizen_id"],))
-        return render_template("complaints.html", complaints=rows, departments=departments,
+        return render_template("complaints.html", complaints=rows,
                                is_citizen=True, region=query(
                                    "SELECT * FROM Region WHERE region_id = ?",
                                    (citizen["region_id"],), one=True))
@@ -510,7 +540,7 @@ def complaints():
            ) lp ON lp.region_id = c.region_id
            LEFT JOIN HeatwaveSeverity sev ON sev.severity_id = lp.severity_id
            ORDER BY (c.status = 'Resolved') ASC, region_rank DESC, c.created_at ASC""")
-    return render_template("complaints.html", complaints=rows, departments=departments,
+    return render_template("complaints.html", complaints=rows,
                            is_citizen=False, region=None)
 
 
@@ -565,9 +595,7 @@ def complaint_detail(complaint_id):
                            officers=officers, can_manage=user["role"] in ("Officer", "Administrator"))
 
 
-# ===========================================================================
-# Module 6 -- Complaint Assignment & Resolution
-# ===========================================================================
+# --- complaint assignment & resolution -- Module 6 -------------------------
 @app.route("/complaints/<int:complaint_id>/assign", methods=["POST"])
 @role_required("Officer", "Administrator")
 def assign_complaint(complaint_id):
@@ -590,7 +618,6 @@ def update_complaint_status(complaint_id):
     status = request.form["status"]
     if status not in ("Open", "In Progress", "Resolved"):
         abort(400)
-    resolved_at = "datetime('now')" if status == "Resolved" else "NULL"
     if status == "Resolved":
         execute("UPDATE Complaint SET status = ?, resolved_at = datetime('now') WHERE complaint_id = ?",
                 (status, complaint_id))
@@ -608,9 +635,7 @@ def update_complaint_status(complaint_id):
     return redirect(url_for("complaint_detail", complaint_id=complaint_id))
 
 
-# ===========================================================================
-# Module 7 -- Dashboard & Reports (Chart.js)
-# ===========================================================================
+# --- dashboard & reports (Chart.js) -- Module 7 ----------------------------
 def region_risk_levels():
     """Latest severity level per region (for the color-coded risk list)."""
     return query(
@@ -691,9 +716,7 @@ def api_prediction_trend():
     })
 
 
-# ===========================================================================
-# Module 8 -- Database Administration (row counts + CSV export)
-# ===========================================================================
+# --- database administration (row counts + CSV export) -- Module 8 --------
 @app.route("/admin/db")
 @role_required("Administrator")
 def admin_db():

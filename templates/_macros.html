@@ -1,0 +1,21 @@
+{# _macros.html
+   Small reusable pieces shared by every page, so the badge markup doesn't
+   get copy-pasted into each template (it used to be, in 8 places, which is
+   also why the citizen dashboard was showing status as plain text -- one of
+   the copies was never updated). #}
+
+{% macro sev_tag(level) -%}
+<span class="sev-tag" data-level="{{ level }}"><span class="sev-tag-mark"></span>{{ level }}</span>
+{%- endmacro %}
+
+{% macro status_tag(status) -%}
+<span class="status-tag" data-status="{{ status }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro page_head(eyebrow, title, lede=none) -%}
+<div class="page-head">
+  <p class="eyebrow">{{ eyebrow }}</p>
+  <h1>{{ title }}</h1>
+  {% if lede %}<p class="lede">{{ lede }}</p>{% endif %}
+</div>
+{%- endmacro %}

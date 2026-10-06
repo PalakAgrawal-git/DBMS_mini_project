@@ -1,19 +1,19 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 {% block title %}Database Administration{% endblock %}
 {% block content %}
-<h3 class="mb-1">Database Administration</h3>
-<p class="text-muted small">Table row counts and CSV export (basic backup feature).</p>
+{{ page_head("Module 8", "Database Administration", "Table row counts and CSV export (basic backup feature).") }}
 
 <div class="card">
   <div class="card-body">
     <div class="table-responsive">
       <table class="table table-hover align-middle">
-        <thead><tr><th>Table</th><th>Row count</th><th>Export</th></tr></thead>
+        <thead><tr><th>Table</th><th class="num">Row count</th><th>Export</th></tr></thead>
         <tbody>
           {% for row in counts %}
           <tr>
             <td><code>{{ row.table }}</code></td>
-            <td>{{ row.rows }}</td>
+            <td class="num">{{ row.rows }}</td>
             <td>
               <a class="btn btn-sm btn-outline-success"
                  href="{{ url_for('admin_export', table=row.table) }}">Download CSV</a>
