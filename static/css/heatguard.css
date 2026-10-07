@@ -160,7 +160,9 @@ td.num, th.num { text-align: right; }
 .hero p { color: var(--muted); max-width: 620px; margin: 0 auto; line-height: 1.6; }
 
 .account-section { max-width: 980px; margin: 1.5rem auto 0; }
-.account-card-header { font-weight: 600; }
+.account-card { cursor: pointer; }
+.account-card:hover { border-color: var(--accent); }
+.role-avatar-lg { width: 56px; height: 56px; font-size: 1.4rem; margin: 0 auto .75rem; }
 .account-row {
   display: flex; align-items: center; gap: .85rem;
   padding: .7rem .9rem; border: 1px solid var(--rule); border-radius: 6px;

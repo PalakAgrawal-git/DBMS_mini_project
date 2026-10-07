@@ -331,7 +331,7 @@ function buildNav() {
     <li class="nav-item"><button class="btn btn-outline-primary btn-sm ms-2" onclick="logout();return false;">Switch account</button></li>`;
 }
 function go(view){ currentView = view; buildNav(); (VIEWS[view]||VIEWS.dashboard)(); window.scrollTo(0,0); }
-function logout(){ currentUser=null; buildNav(); loginScreen(); }
+function logout(){ currentUser=null; pickedRole=null; buildNav(); loginScreen(); }
 function loginAs(uid){ currentUser = one("SELECT * FROM User WHERE user_id=?",[uid]); go('dashboard'); }
 
 function app(html){
@@ -345,38 +345,24 @@ function sevBadge(l){
 
 // ---- Login screen ----
 function initials(name){ return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-function loginScreen() {
-  const users = run("SELECT * FROM User ORDER BY CASE role WHEN 'Administrator' THEN 1 WHEN 'Officer' THEN 2 ELSE 3 END, full_name");
-  const meta = {
-    Administrator: {cls:'adm', desc:'Full access, DB admin, reports'},
-    Officer:       {cls:'off', desc:'Assigns and resolves complaints'},
-    Citizen:       {cls:'cit', desc:''}
-  };
-  const officerDesc = { 'Water Supply': 'Water supply department', 'Health': 'Health department' };
-  const citizenDesc = { priya: 'Reports from Nagpur', rahul: 'Reports from Vidarbha East',
-    sana: 'Reports from Akola', dev: 'Reports from Chandrapur' };
-  const groups = [
-    ['Administrator', 'Administrator'],
-    ['Officer', 'Officers'],
-    ['Citizen', 'Citizens'],
-  ];
+const roleMeta = {
+  Administrator: {cls:'adm', desc:'Full access, DB admin, reports', icon:'&#9881;'},
+  Officer:       {cls:'off', desc:'Assigns and resolves complaints', icon:'&#128188;'},
+  Citizen:       {cls:'cit', desc:'Files complaints, views alerts', icon:'&#128100;'}
+};
+const roleGroups = [
+  ['Administrator', 'Administrator'],
+  ['Officer', 'Officers'],
+  ['Citizen', 'Citizens'],
+];
+let pickedRole = null;
 
-  function accountRow(u) {
-    const m = meta[u.role];
-    let desc = m.desc;
-    if (u.role === 'Officer') desc = officerDesc[officerOf(u.user_id).dept_name] || desc;
-    if (u.role === 'Citizen') desc = citizenDesc[u.username] || desc;
-    return `
-      <a class="account-row" href="#" onclick="loginAs(${u.user_id});return false;">
-        <div class="account-avatar ${m.cls}">${initials(u.full_name)}</div>
-        <div class="account-meta">
-          <div class="account-name">${esc(u.full_name)}</div>
-          <div class="account-handle">@${esc(u.username)}</div>
-          <div class="account-desc">${desc}</div>
-        </div>
-        <span class="account-role">${u.role}</span>
-      </a>`;
-  }
+function loginScreen() {
+  if (pickedRole) return roleAccountScreen(pickedRole);
+
+  const users = run("SELECT role, COUNT(*) AS n FROM User GROUP BY role");
+  const counts = {};
+  users.forEach(u => counts[u.role] = u.n);
 
   app(`
    <div class="hero">
@@ -385,16 +371,56 @@ function loginScreen() {
      <p>Demo project. Pick an account to log in. Data resets when you refresh.</p>
    </div>
    <div class="account-section row g-3">
-     ${groups.map(([role, label]) => {
-        const rows = users.filter(u => u.role === role);
-        if (!rows.length) return '';
+     ${roleGroups.map(([role, label]) => {
+        if (!counts[role]) return '';
+        const m = roleMeta[role];
         return `<div class="col-md-4">
-          <div class="card account-card h-100">
-            <div class="card-header account-card-header">${label}</div>
-            <div class="card-body">${rows.map(accountRow).join('')}</div>
+          <div class="card account-card h-100" role="button" onclick="pickRole('${role}')">
+            <div class="card-body text-center">
+              <div class="account-avatar ${m.cls} role-avatar-lg">${m.icon}</div>
+              <h5 class="card-title mb-1">${label}</h5>
+              <p class="account-desc">${m.desc}</p>
+              <p class="account-handle">${counts[role]} account${counts[role] > 1 ? 's' : ''}</p>
+            </div>
           </div>
         </div>`;
       }).join('')}
+   </div>`);
+}
+
+function pickRole(role) { pickedRole = role; loginScreen(); }
+
+function roleAccountScreen(role) {
+  const users = run("SELECT * FROM User WHERE role=? ORDER BY full_name", [role]);
+  const m = roleMeta[role];
+  const officerDesc = { 'Water Supply': 'Water supply department', 'Health': 'Health department' };
+  const citizenDesc = { priya: 'Reports from Nagpur', rahul: 'Reports from Vidarbha East',
+    sana: 'Reports from Akola', dev: 'Reports from Chandrapur' };
+
+  function accountRow(u) {
+    let desc = m.desc;
+    if (role === 'Officer') desc = officerDesc[officerOf(u.user_id).dept_name] || desc;
+    if (role === 'Citizen') desc = citizenDesc[u.username] || desc;
+    return `
+      <a class="account-row" href="#" onclick="loginAs(${u.user_id});return false;">
+        <div class="account-avatar ${m.cls}">${initials(u.full_name)}</div>
+        <div class="account-meta">
+          <div class="account-name">${esc(u.full_name)}</div>
+          <div class="account-handle">@${esc(u.username)}</div>
+          <div class="account-desc">${desc}</div>
+        </div>
+      </a>`;
+  }
+
+  app(`
+   <div class="hero">
+     <p class="eyebrow">${role}</p>
+     <h1>Welcome</h1>
+     <p>Pick an account to log in as.</p>
+   </div>
+   <div class="account-section">
+     ${users.map(accountRow).join('')}
+     <a href="#" class="d-inline-block mt-3" onclick="pickedRole=null;loginScreen();return false;">&larr; Back to roles</a>
    </div>`);
 }
 
