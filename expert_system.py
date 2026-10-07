@@ -1,27 +1,12 @@
-"""
-expert_system.py
-================
-Rule-based classifier for heatwave severity -- fixed IF-THEN threshold rules
-on the latest weather observation, no trained model and no ML libraries.
+# Rule-based severity classifier. Fixed thresholds, no ML.
+#
+#   Extreme  temp >= 45, OR (temp >= 40 AND humidity <= 20)
+#   High     temp >= 40
+#   Moderate temp >= 35
+#   Low      anything below that
 
-Rules (evaluated top-down, first match wins):
-
-    | Severity | Condition                                      |
-    |----------|-------------------------------------------------|
-    | Extreme  | temp >= 45 C, OR (temp >= 40 C AND humidity <= 20%) |
-    | High     | temp >= 40 C                                     |
-    | Moderate | temp >= 35 C                                     |
-    | Low      | anything below that                              |
-
-classify_severity() returns (level, reason) -- reason names which rule fired,
-and is stored in HeatwavePrediction.reason for transparency.
-"""
-
-# The four severity levels, matched to the HeatwaveSeverity lookup table.
 SEVERITY_LEVELS = ("Low", "Moderate", "High", "Extreme")
 
-# Static catalogue of advisory messages per severity level. Seeded into the
-# Advisory table by seed.py; kept here too so the expert system is self-contained.
 ADVISORIES = {
     "Low": [
         "Conditions are normal. Stay aware of weather updates.",
@@ -45,48 +30,26 @@ ADVISORIES = {
 
 
 def classify_severity(temperature, humidity, wind_speed):
-    """
-    Apply the rule-based expert-system rules and return (level, reason).
-
-    Parameters
-    ----------
-    temperature : float   degrees Celsius
-    humidity    : float   percent (0-100)
-    wind_speed  : float   km/h (accepted for completeness; not part of the
-                          threshold rules, but stored with the prediction)
-
-    Returns
-    -------
-    (level, reason) : tuple[str, str]
-    """
+    # wind_speed isn't used by the rules, just stored with the prediction
     t = float(temperature)
     h = float(humidity)
 
-    # Rule 1 -- Extreme
     if t >= 45:
-        return "Extreme", f"Rule: temperature {t} C >= 45 C."
+        return "Extreme", "temp >= 45"
     if t >= 40 and h <= 20:
-        return "Extreme", f"Rule: temperature {t} C >= 40 C AND humidity {h}% <= 20% (dry heat)."
-
-    # Rule 2 -- High
+        return "Extreme", "temp >= 40 and humidity <= 20"
     if t >= 40:
-        return "High", f"Rule: temperature {t} C >= 40 C."
-
-    # Rule 3 -- Moderate
+        return "High", "temp >= 40"
     if t >= 35:
-        return "Moderate", f"Rule: temperature {t} C >= 35 C."
-
-    # Rule 4 -- Low (default)
-    return "Low", f"Rule: temperature {t} C is below 35 C."
+        return "Moderate", "temp >= 35"
+    return "Low", "temp < 35"
 
 
 def advisories_for(level):
-    """Return the list of advisory messages for a given severity level."""
     return ADVISORIES.get(level, [])
 
 
 if __name__ == "__main__":
-    # Quick self-test of the rule set.
     samples = [
         (46, 30, 10),
         (41, 15, 5),

@@ -2,7 +2,7 @@
 {% from "_macros.html" import page_head, sev_tag %}
 {% block title %}Heatwave Predictions{% endblock %}
 {% block content %}
-{{ page_head("Module 3", "AI Heatwave Predictions", "Severity here comes from a rule-based expert system — fixed threshold rules on the latest observation, not a trained machine-learning model.") }}
+{{ page_head("Predictions", "Heatwave Predictions") }}
 
 {% if can_run %}
 <div class="card mb-3">
@@ -21,8 +21,7 @@
       </div>
     </form>
     <p class="small text-muted mt-2 mb-0">
-      Uses the region's most recent weather observation. High/Extreme results auto-create a
-      warning alert (via a database trigger).
+      Uses the region's most recent weather observation.
     </p>
   </div>
 </div>

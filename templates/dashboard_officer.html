@@ -2,14 +2,12 @@
 {% from "_macros.html" import page_head, sev_tag, status_tag %}
 {% block title %}Officer Dashboard{% endblock %}
 {% block content %}
-{{ page_head(current_user.full_name ~ " · " ~ officer.dept_name ~ " · " ~ officer.designation, "Officer Dashboard") }}
+{{ page_head("Welcome, " ~ current_user.full_name ~ " (" ~ officer.dept_name ~ ")", "Officer Dashboard") }}
 
 <div class="card mb-3">
   <div class="card-body">
     <h5 class="card-title">Complaints assigned to you / your department</h5>
-    <p class="small text-muted">
-      Ordered by current region severity (Extreme/High regions rank first), then oldest first.
-    </p>
+    <p class="small text-muted">Sorted by region severity, then oldest first.</p>
     <div class="table-responsive">
       <table class="table table-hover align-middle">
         <thead>

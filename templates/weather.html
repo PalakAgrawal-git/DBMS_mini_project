@@ -2,7 +2,7 @@
 {% from "_macros.html" import page_head %}
 {% block title %}Weather Monitoring{% endblock %}
 {% block content %}
-{{ page_head("Module 2", "Weather Monitoring") }}
+{{ page_head("Weather", "Weather Monitoring") }}
 
 {% if can_edit %}
 <div class="row g-3 mb-4">
@@ -66,7 +66,7 @@
         <div class="form-check mb-2">
           <input class="form-check-input" type="checkbox" name="run_prediction" id="runpred" checked>
           <label class="form-check-label small" for="runpred">
-            Run rule-based prediction on save (auto-generates alerts for High/Extreme)
+            Run prediction on save
           </label>
         </div>
         <button class="btn btn-sm btn-primary">Record Observation</button>

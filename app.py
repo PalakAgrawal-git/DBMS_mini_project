@@ -1,18 +1,4 @@
-"""
-app.py
-======
-AI-Based Heatwave Complaint & Early Warning System -- Flask backend.
-
-Implements all 8 modules:
-    1. User Management        -- register / login / role-based access control
-    2. Weather Monitoring     -- CRUD for WeatherStation & WeatherObservation
-    3. AI Heatwave Prediction -- rule-based expert system -> HeatwavePrediction
-    4. Early Warning/Advisory -- auto WarningAlert (DB trigger) + advisories
-    5. Complaint Management   -- citizens register/view complaints
-    6. Assignment/Resolution  -- officer/admin assign & update status (severity-prioritised)
-    7. Dashboard & Reports    -- Chart.js stats, region risk levels, trend
-    8. Database Administration -- table row counts + CSV export
-"""
+# Flask backend for HeatGuard - weather, predictions, alerts, complaints.
 
 import csv
 import io
@@ -117,7 +103,7 @@ def execute(sql, args=()):
 
 
 # ---------------------------------------------------------------------------
-# Auth helpers / decorators (Module 1: role-based access control)
+# Auth helpers / decorators
 # ---------------------------------------------------------------------------
 def current_user():
     uid = session.get("user_id")
@@ -174,7 +160,7 @@ def severity_lookup():
     return out
 
 
-# --- user management (register / login / logout) -- Module 1 --------------
+# --- user management (register / login / logout) --------------------------
 @app.route("/")
 def index():
     if session.get("user_id"):
@@ -305,7 +291,7 @@ def dashboard():
                JOIN GovernmentDepartment d ON d.dept_id = o.dept_id
                WHERE o.user_id = ?""", (user["user_id"],), one=True)
         # Complaints assigned to this officer OR to the officer's department, unresolved first,
-        # prioritised by the current region severity rank (Module 6).
+        # prioritised by the current region severity rank
         assigned = query(
             """SELECT c.*, r.name AS region_name, cu.full_name AS citizen_name,
                       COALESCE(sev.rank, 0) AS region_rank, COALESCE(sev.level, 'Low') AS region_level
@@ -341,7 +327,7 @@ def dashboard():
     return render_template("dashboard_admin.html", counts=counts, summary=summary, risk=risk)
 
 
-# --- weather monitoring (station + observation CRUD) -- Module 2 ----------
+# --- weather monitoring (station + observation CRUD) ----------------------
 @app.route("/weather")
 @login_required
 def weather():
@@ -395,7 +381,7 @@ def add_observation():
     )
     flash("Weather observation recorded.", "success")
 
-    # Automatically run the expert system on the new observation (Module 3).
+    # run the expert system on the new reading, if asked to
     if request.form.get("run_prediction"):
         station = query("SELECT * FROM WeatherStation WHERE station_id = ?", (station_id,), one=True)
         run_prediction_for_region(station["region_id"], obs_id,
@@ -404,9 +390,7 @@ def add_observation():
     return redirect(url_for("weather"))
 
 
-# --- prediction + early warning -- Modules 3 & 4 ---------------------------
-# Module 3 is the rule-based expert system below; Module 4 is the
-# WarningAlert it triggers (auto-created by the DB, not this code).
+# --- prediction + early warning ---------------------------------------------
 def run_prediction_for_region(region_id, obs_id, temperature, humidity, wind_speed):
     """
     Run the rule-based expert system and write a HeatwavePrediction row.
@@ -423,14 +407,15 @@ def run_prediction_for_region(region_id, obs_id, temperature, humidity, wind_spe
         (region_id, obs_id, sev["severity_id"], temperature, humidity, wind_speed, reason),
     )
 
-    # For High/Extreme, the trigger already inserted a WarningAlert. Notify citizens.
+    # trigger already made the WarningAlert row; just let citizens know
     if sev["rank"] >= 3:
         region = query("SELECT * FROM Region WHERE region_id = ?", (region_id,), one=True)
         citizen_users = query(
             "SELECT user_id FROM Citizen WHERE region_id = ?", (region_id,))
         for cu in citizen_users:
             notify(cu["user_id"],
-                   f"{level} heatwave warning issued for {region['name']}. Please view active alerts.")
+                   f"Heatwave warning for {region['name']}: temperature reached {temperature}°C. "
+                   f"Avoid going out in the afternoon.")
     return prediction_id, level
 
 
@@ -502,7 +487,7 @@ def deactivate_alert(alert_id):
     return redirect(url_for("alerts"))
 
 
-# --- complaint management (citizen create / view) -- Module 5 -------------
+# --- complaint management (citizen create / view) --------------------------
 @app.route("/complaints")
 @login_required
 def complaints():
@@ -522,7 +507,7 @@ def complaints():
                                    "SELECT * FROM Region WHERE region_id = ?",
                                    (citizen["region_id"],), one=True))
 
-    # Officer / Administrator: all complaints, severity-prioritised (Module 6).
+    # officer/admin view: all complaints, severity-prioritised
     rows = query(
         """SELECT c.*, r.name AS region_name, d.name AS dept_name, cu.full_name AS citizen_name,
                   COALESCE(sev.rank, 0) AS region_rank, COALESCE(sev.level, 'Low') AS region_level
@@ -595,7 +580,7 @@ def complaint_detail(complaint_id):
                            officers=officers, can_manage=user["role"] in ("Officer", "Administrator"))
 
 
-# --- complaint assignment & resolution -- Module 6 -------------------------
+# --- complaint assignment & resolution --------------------------------------
 @app.route("/complaints/<int:complaint_id>/assign", methods=["POST"])
 @role_required("Officer", "Administrator")
 def assign_complaint(complaint_id):
@@ -635,7 +620,7 @@ def update_complaint_status(complaint_id):
     return redirect(url_for("complaint_detail", complaint_id=complaint_id))
 
 
-# --- dashboard & reports (Chart.js) -- Module 7 ----------------------------
+# --- dashboard & reports (Chart.js) ------------------------------------------
 def region_risk_levels():
     """Latest severity level per region (for the color-coded risk list)."""
     return query(
@@ -716,7 +701,7 @@ def api_prediction_trend():
     })
 
 
-# --- database administration (row counts + CSV export) -- Module 8 --------
+# --- database administration (row counts + CSV export) ----------------------
 @app.route("/admin/db")
 @role_required("Administrator")
 def admin_db():

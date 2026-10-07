@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HeatGuard — AI Heatwave Complaint & Early Warning System</title>
+<title>HeatGuard - Heatwave Complaint & Early Warning System</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,9 +31,7 @@
 <div class="container my-4" id="app"></div>
 
 <footer class="site-footer text-center py-3">
-  HeatGuard &mdash; Heatwave Complaint &amp; Early Warning System &middot; DBMS Mini Project
-  &middot; runs entirely in your browser with real SQLite (sql.js)
-  &middot; <a href="https://github.com/AgrawalPalak08/DBMS_mini_project" target="_blank">source &amp; Flask version on GitHub</a>
+  HeatGuard &mdash; DBMS Mini Project
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
@@ -200,12 +198,13 @@ const ADVISORIES = {
              "Keep pets and vulnerable people in cool, ventilated spaces."]
 };
 function classifySeverity(t, h) {
+  // mirrors expert_system.py's classify_severity
   t = parseFloat(t); h = parseFloat(h);
-  if (t >= 45) return ["Extreme", `Rule: temperature ${t} C >= 45 C.`];
-  if (t >= 40 && h <= 20) return ["Extreme", `Rule: temperature ${t} C >= 40 C AND humidity ${h}% <= 20% (dry heat).`];
-  if (t >= 40) return ["High", `Rule: temperature ${t} C >= 40 C.`];
-  if (t >= 35) return ["Moderate", `Rule: temperature ${t} C >= 35 C.`];
-  return ["Low", `Rule: temperature ${t} C is below 35 C.`];
+  if (t >= 45) return ["Extreme", "temp >= 45"];
+  if (t >= 40 && h <= 20) return ["Extreme", "temp >= 40 and humidity <= 20"];
+  if (t >= 40) return ["High", "temp >= 40"];
+  if (t >= 35) return ["Moderate", "temp >= 35"];
+  return ["Low", "temp < 35"];
 }
 
 // ---- DB helpers ----
@@ -275,33 +274,36 @@ function seed() {
   const stId = {};
   stSpec.forEach(([reg,n,la,lo]) => { exec("INSERT INTO WeatherStation (region_id,name,latitude,longitude) VALUES (?,?,?,?)",[regId[reg],n,la,lo]); stId[n]=one("SELECT last_insert_rowid() AS id").id; });
 
-  const obsSpec = [["Nagpur Central AWS",47.0,18,8,0,true],["Nagpur Central AWS",44.0,25,6,1,true],
-    ["Nagpur Central AWS",41.0,30,5,2,true],["Nagpur Airport AWS",46.5,15,10,0,false],
-    ["Vidarbha East AWS",41.0,35,7,0,true],["Vidarbha East AWS",38.0,40,6,2,true],
-    ["Akola City AWS",36.5,45,9,0,true],["Akola City AWS",34.0,55,8,3,true],
-    ["Chandrapur AWS",33.0,60,12,0,true]];
-  obsSpec.forEach(([st,t,h,w,days,mk]) => {
+  const obsSpec = [["Nagpur Central AWS",44.8,32,11,2,true],["Nagpur Airport AWS",41.3,45,13,5,false],
+    ["Vidarbha East AWS",41.7,38,14,5,true],["Chandrapur AWS",46.3,25,7,26,true],
+    ["Nagpur Central AWS",39.6,42,10,26,true],["Vidarbha East AWS",37.8,50,8,76,true],
+    ["Akola City AWS",36.1,55,10,76,true],["Akola City AWS",33.4,60,9,168,true],
+    ["Chandrapur AWS",34.9,58,12,168,false]];
+  obsSpec.forEach(([st,t,h,w,hrs,mk]) => {
     const sid = stId[st];
-    exec(`INSERT INTO WeatherObservation (station_id,temperature,humidity,wind_speed,observed_at,recorded_by) VALUES (?,?,?,?, datetime('now','-${days} days'), ?)`,[sid,t,h,w,off1U]);
+    exec(`INSERT INTO WeatherObservation (station_id,temperature,humidity,wind_speed,observed_at,recorded_by) VALUES (?,?,?,?, datetime('now','-${hrs} hours'), ?)`,[sid,t,h,w,off1U]);
     const obsId = one("SELECT last_insert_rowid() AS id").id;
     if (mk) {
       const [level,reason] = classifySeverity(t,h);
       const reg = one("SELECT region_id FROM WeatherStation WHERE station_id=?",[sid]).region_id;
-      exec(`INSERT INTO HeatwavePrediction (region_id,obs_id,severity_id,temperature,humidity,wind_speed,reason,predicted_at) VALUES (?,?,?,?,?,?,?, datetime('now','-${days} days'))`,[reg,obsId,sevId[level],t,h,w,reason]);
-      // trigger auto-creates WarningAlert for High/Extreme
+      exec(`INSERT INTO HeatwavePrediction (region_id,obs_id,severity_id,temperature,humidity,wind_speed,reason,predicted_at) VALUES (?,?,?,?,?,?,?, datetime('now','-${hrs} hours'))`,[reg,obsId,sevId[level],t,h,w,reason]);
+      // trigger handles the alert, not this code
     }
   });
 
   const compSpec = [
-    ["priya","Water Shortage","No water supply for 2 days in our locality during peak heat.","Open",null,null,0],
-    ["priya","Heat Illness","Elderly neighbour showing signs of heat exhaustion, need help.","In Progress","Health",off2,1],
-    ["rahul","Power Outage","Frequent power cuts making it impossible to run fans/coolers.","Open","Electricity Board",null,0],
-    ["sana","Water Shortage","Tanker did not arrive as scheduled this week.","Resolved","Water Supply",off1,3],
-    ["dev","Public Cooling","Request for a public cooling center near the bus stand.","Open",null,null,2],
-    ["rahul","Heat Illness","Need ORS packets distributed at the community hall.","In Progress","Health",off2,1]];
-  compSpec.forEach(([u,cat,desc,status,dept,officer,days]) => {
+    ["priya","Water Shortage","No drinking water since morning, whole street affected.","Open",null,null,2],
+    ["priya","Heat Illness","Elderly neighbour showing signs of heat exhaustion, need help.","In Progress","Health",off2,5],
+    ["rahul","Power Outage","Power cut for 6 hours yesterday, fans not working.","Open","Electricity Board",null,5],
+    ["sana","Water Shortage","Tanker didnt come this week again.","Resolved","Water Supply",off1,76],
+    ["dev","Public Cooling","No shade at bus stand, people fainting in the heat.","Open",null,null,26],
+    ["rahul","Heat Illness","Need ORS packets at community hall asap.","In Progress","Health",off2,26],
+    ["sana","Power Outage","Hospital ward has no power backup during outages.","Open","Health",null,168],
+    ["priya","Public Cooling","Can we get a cooling center near MG road.","Resolved",null,off1,168],
+    ["dev","Water Shortage","Water pressure very low since 3 days.","In Progress","Water Supply",off1,76]];
+  compSpec.forEach(([u,cat,desc,status,dept,officer,hrs]) => {
     const rid = one("SELECT region_id FROM Citizen WHERE citizen_id=?",[citId[u]]).region_id;
-    exec(`INSERT INTO Complaint (citizen_id,region_id,dept_id,assigned_officer_id,category,description,status,created_at,resolved_at) VALUES (?,?,?,?,?,?,?, datetime('now','-${days} days'), ${status==='Resolved'?"datetime('now')":"NULL"})`,
+    exec(`INSERT INTO Complaint (citizen_id,region_id,dept_id,assigned_officer_id,category,description,status,created_at,resolved_at) VALUES (?,?,?,?,?,?,?, datetime('now','-${hrs} hours'), ${status==='Resolved'?"datetime('now')":"NULL"})`,
       [citId[u], rid, dept?deptId[dept]:null, officer, cat, desc, status]);
   });
   exec("INSERT INTO Notification (user_id,message) VALUES (?,?)",[adminU,"Welcome to the Heatwave Early Warning System."]);
@@ -351,8 +353,11 @@ function loginScreen() {
   const meta = {
     Administrator: {cls:'adm', desc:'Full access, DB admin, reports'},
     Officer:       {cls:'off', desc:'Assigns and resolves complaints'},
-    Citizen:       {cls:'cit', desc:'Files complaints, views alerts'}
+    Citizen:       {cls:'cit', desc:''}
   };
+  const officerDesc = { 'Water Supply': 'Water supply department', 'Health': 'Health department' };
+  const citizenDesc = { priya: 'Reports from Nagpur', rahul: 'Reports from Vidarbha East',
+    sana: 'Reports from Akola', dev: 'Reports from Chandrapur' };
   const groups = [
     ['Administrator', 'Administrator'],
     ['Officer', 'Officers'],
@@ -361,13 +366,16 @@ function loginScreen() {
 
   function accountRow(u) {
     const m = meta[u.role];
+    let desc = m.desc;
+    if (u.role === 'Officer') desc = officerDesc[officerOf(u.user_id).dept_name] || desc;
+    if (u.role === 'Citizen') desc = citizenDesc[u.username] || desc;
     return `
       <a class="account-row" href="#" onclick="loginAs(${u.user_id});return false;">
         <div class="account-avatar ${m.cls}">${initials(u.full_name)}</div>
         <div class="account-meta">
           <div class="account-name">${esc(u.full_name)}</div>
           <div class="account-handle">@${esc(u.username)}</div>
-          <div class="account-desc">${m.desc}</div>
+          <div class="account-desc">${desc}</div>
         </div>
         <span class="account-role">${u.role}</span>
       </a>`;
@@ -377,8 +385,7 @@ function loginScreen() {
    <div class="hero">
      <p class="eyebrow">DBMS Mini Project</p>
      <h1>HeatGuard</h1>
-     <p>Pick an account to look around. Everything runs on a real SQLite database inside your
-        browser, so feel free to break things &mdash; refresh the page to reset.</p>
+     <p>Demo project. Pick an account to log in. Data resets when you refresh.</p>
    </div>
    <div class="account-section">
      ${groups.map(([role, label]) => {
@@ -445,10 +452,10 @@ function officerDashboard() {
     ORDER BY (c.status='Resolved') ASC, region_rank DESC, c.created_at ASC`,[o.officer_id,o.dept_id]);
   const summary = run("SELECT * FROM v_region_complaint_summary ORDER BY total_complaints DESC");
   app(`
-    ${pageHead(esc(currentUser.full_name) + ' · ' + esc(o.dept_name) + ' · ' + esc(o.designation), 'Officer Dashboard')}
+    ${pageHead('Welcome, ' + esc(currentUser.full_name) + ' (' + esc(o.dept_name) + ')', 'Officer Dashboard')}
     <div class="card mb-3"><div class="card-body">
       <h5 class="card-title">Complaints assigned to you / your department</h5>
-      <p class="small text-muted">Ordered by current region severity (Extreme/High first), then oldest first.</p>
+      <p class="small text-muted">Sorted by region severity, then oldest first.</p>
       <table class="table table-hover align-middle"><thead><tr><th class="num">#</th><th>Region</th><th>Risk</th><th>Category</th><th>Citizen</th><th>Status</th><th></th></tr></thead><tbody>
       ${assigned.length?assigned.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.region_name)}</td><td>${sevBadge(c.region_level)}</td><td>${esc(c.category)}</td><td>${esc(c.citizen_name)}</td><td>${statusBadge(c.status)}</td><td><button class="btn btn-sm btn-outline-primary" onclick="go('complaints');setTimeout(()=>openComplaint(${c.complaint_id}),0)">Manage</button></td></tr>`).join(''):`<tr class="empty-row"><td colspan="7">No complaints assigned.</td></tr>`}
       </tbody></table>
@@ -487,7 +494,7 @@ VIEWS.weather = function() {
   const obs = run("SELECT wo.*, ws.name AS station_name, r.name AS region_name FROM WeatherObservation wo JOIN WeatherStation ws ON ws.station_id=wo.station_id JOIN Region r ON r.region_id=ws.region_id ORDER BY wo.observed_at DESC LIMIT 50");
   const regions = run("SELECT * FROM Region ORDER BY name");
   app(`
-    ${pageHead('Module 2', 'Weather Monitoring')}
+    ${pageHead('Weather', 'Weather Monitoring')}
     ${canEdit?`<div class="card mb-3"><div class="card-body">
       <h6 class="card-title">Record Weather Observation</h6>
       <div class="row g-2 align-items-end">
@@ -498,7 +505,6 @@ VIEWS.weather = function() {
         <div class="col"><label class="form-label">Wind km/h</label><input id="w_wind" type="number" step="0.1" class="form-control form-control-sm"></div>
         <div class="col-auto"><button class="btn btn-sm btn-primary" onclick="addObservation()">Record + Predict</button></div>
       </div>
-      <p class="small text-muted mt-2 mb-0">Recording runs the rule-based expert system; High/Extreme results auto-create an alert via the database trigger.</p>
     </div></div>`:''}
     <div class="card mb-3"><div class="card-body"><h5 class="card-title">Weather Stations</h5>
       <div class="table-responsive"><table class="table table-sm"><thead><tr><th class="num">ID</th><th>Name</th><th>Region</th><th class="num">Lat</th><th class="num">Lon</th></tr></thead><tbody>
@@ -535,12 +541,12 @@ VIEWS.predictions = function() {
   const regions = run("SELECT * FROM Region ORDER BY name");
   const preds = run("SELECT hp.*, r.name AS region_name, s.level FROM HeatwavePrediction hp JOIN Region r ON r.region_id=hp.region_id JOIN HeatwaveSeverity s ON s.severity_id=hp.severity_id ORDER BY hp.predicted_at DESC LIMIT 100");
   app(`
-    ${pageHead('Module 3', 'AI Heatwave Predictions', 'Severity here comes from a rule-based expert system — fixed threshold rules on the latest observation, not a trained machine-learning model.')}
+    ${pageHead('Predictions', 'Heatwave Predictions')}
     ${canRun?`<div class="card mb-3"><div class="card-body"><h6 class="card-title">Run prediction for a region</h6>
       <div class="row g-2 align-items-end"><div class="col-auto"><label class="form-label">Region</label>
         <select id="p_region" class="form-select form-select-sm">${regions.map(r=>`<option value="${r.region_id}">${esc(r.name)}</option>`).join('')}</select></div>
       <div class="col-auto"><button class="btn btn-sm btn-primary" onclick="runRegionPrediction()">Classify latest observation</button></div></div>
-      <p class="small text-muted mt-2 mb-0">Uses the region's most recent observation. High/Extreme auto-creates an alert (DB trigger).</p>
+      <p class="small text-muted mt-2 mb-0">Uses the region's most recent observation.</p>
     </div></div>`:''}
     <div class="card"><div class="card-body"><h5 class="card-title">Prediction History</h5>
       <div class="table-responsive"><table class="table table-sm"><thead><tr><th class="num">#</th><th>Region</th><th>Severity</th><th class="num">Temp</th><th class="num">Hum</th><th class="num">Wind</th><th>Rule fired</th><th>When</th></tr></thead><tbody>
@@ -564,7 +570,7 @@ VIEWS.alerts = function() {
   } else {
     rows = run("SELECT wa.*, r.name AS region_name, s.level FROM WarningAlert wa JOIN Region r ON r.region_id=wa.region_id JOIN HeatwaveSeverity s ON s.severity_id=wa.severity_id WHERE wa.is_active=1 ORDER BY wa.issued_at DESC");
   }
-  app(`${pageHead('Module 4', 'Active Warning Alerts')}
+  app(`${pageHead('Alerts', 'Active Warning Alerts')}
     ${rows.length?rows.map(a=>`<div class="card mb-3"><div class="card-body">
       <div class="d-flex justify-content-between align-items-start"><div>${sevBadge(a.level)} <strong class="ms-2">${esc(a.region_name)}</strong></div>
       ${canManage?`<button class="btn btn-sm btn-outline-secondary" onclick="deactivateAlert(${a.alert_id})">Mark inactive</button>`:''}</div>
@@ -580,7 +586,7 @@ VIEWS.complaints = function() {
     const c = citizenOf(currentUser.user_id);
     const region = one("SELECT * FROM Region WHERE region_id=?",[c.region_id]);
     const rows = run("SELECT c.*, r.name AS region_name, d.name AS dept_name FROM Complaint c JOIN Region r ON r.region_id=c.region_id LEFT JOIN GovernmentDepartment d ON d.dept_id=c.dept_id WHERE c.citizen_id=? ORDER BY c.created_at DESC",[c.citizen_id]);
-    app(`${pageHead('Module 5', 'Complaints')}
+    app(`${pageHead('Complaints', 'Complaints')}
       <div class="card mb-4"><div class="card-body">
         <h6 class="card-title">File a new complaint <span class="small text-muted">(region: ${esc(region.name)})</span></h6>
         <div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Category</label>
@@ -604,8 +610,8 @@ VIEWS.complaints = function() {
         ON l.region_id=hp.region_id AND l.mx=hp.predicted_at) lp ON lp.region_id=c.region_id
       LEFT JOIN HeatwaveSeverity sev ON sev.severity_id=lp.severity_id
       ORDER BY (c.status='Resolved') ASC, region_rank DESC, c.created_at ASC`);
-    app(`${pageHead('Module 5', 'Complaints')}
-      <div class="card"><div class="card-body"><h5 class="card-title">All Complaints <span class="small text-muted">(severity-prioritised: high-risk regions first)</span></h5>
+    app(`${pageHead('Complaints', 'Complaints')}
+      <div class="card"><div class="card-body"><h5 class="card-title">All Complaints <span class="small text-muted">Sorted by region severity</span></h5>
         <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th class="num">#</th><th>Region</th><th>Risk</th><th>Citizen</th><th>Category</th><th>Status</th><th>Dept</th><th></th></tr></thead><tbody>
         ${rows.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.region_name)}</td><td>${sevBadge(c.region_level)}</td><td>${esc(c.citizen_name)}</td><td>${esc(c.category)}</td><td>${statusBadge(c.status)}</td><td class="small">${esc(c.dept_name||'-')}</td><td><button class="btn btn-sm btn-outline-primary" onclick="openComplaint(${c.complaint_id})">View</button></td></tr>`).join('')}
         </tbody></table></div></div></div>`);
@@ -632,7 +638,7 @@ function openComplaint(id) {
   const depts = run("SELECT * FROM GovernmentDepartment ORDER BY name");
   const officers = run("SELECT o.officer_id, u.full_name, d.name AS dept_name FROM Officer o JOIN User u ON u.user_id=o.user_id JOIN GovernmentDepartment d ON d.dept_id=o.dept_id ORDER BY u.full_name");
   app(`<a class="small" href="#" onclick="go('complaints');return false;">&larr; Back to complaints</a>
-    ${pageHead('Module 5 / 6', 'Complaint #' + c.complaint_id)}
+    ${pageHead('Complaint', 'Complaint #' + c.complaint_id)}
     <div class="row g-3"><div class="col-md-7"><div class="card"><div class="card-body">
       <h5 class="card-title">${esc(c.category)} ${statusBadge(c.status)}</h5><p>${esc(c.description)}</p>
       <table class="table table-sm">
@@ -679,7 +685,7 @@ VIEWS.reports = function() {
   const summary = run("SELECT * FROM v_region_complaint_summary ORDER BY total_complaints DESC");
   const risk = regionRisk();
   const active = run("SELECT wa.*, r.name AS region_name, s.level, s.rank FROM WarningAlert wa JOIN Region r ON r.region_id=wa.region_id JOIN HeatwaveSeverity s ON s.severity_id=wa.severity_id WHERE wa.is_active=1 ORDER BY s.rank DESC, wa.issued_at DESC");
-  app(`${pageHead('Module 7', 'Dashboard & Reports')}
+  app(`${pageHead('Reports', 'Dashboard & Reports')}
     <div class="row g-3 mb-3">
       <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Status</h6><div class="chartbox"><canvas id="statusChart"></canvas></div></div></div></div>
       <div class="col-md-6"><div class="card h-100"><div class="card-body"><h6 class="card-title">Complaints by Region</h6><div class="chartbox"><canvas id="regionChart"></canvas></div></div></div></div>
@@ -722,7 +728,7 @@ function drawCharts() {
 
 VIEWS.dbadmin = function() {
   const tables = ["User","Region","HeatwaveSeverity","GovernmentDepartment","Citizen","Officer","Administrator","WeatherStation","WeatherObservation","HeatwavePrediction","Advisory","WarningAlert","Complaint","Notification"];
-  app(`${pageHead('Module 8', 'Database Administration', 'Table row counts and CSV export (basic backup feature).')}
+  app(`${pageHead('Admin', 'Database Administration', 'Table row counts and CSV export.')}
     <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Table</th><th class="num">Row count</th><th>Export</th></tr></thead><tbody>
     ${tables.map(t=>`<tr><td><code>${t}</code></td><td class="num">${one("SELECT COUNT(*) c FROM "+t).c}</td><td><button class="btn btn-sm btn-outline-success" onclick="exportCSV('${t}')">Download CSV</button></td></tr>`).join('')}
     </tbody></table></div></div></div>`);
@@ -738,7 +744,7 @@ function exportCSV(table) {
 }
 
 VIEWS.sql = function() {
-  app(`${pageHead('Module 8', 'SQL Console', 'Run any SQL against the in-browser SQLite database &mdash; great for demonstrating the schema, the view, and the trigger live in a viva.')}
+  app(`${pageHead('Admin', 'SQL Console', 'Run any SQL against the in-browser SQLite database.')}
     <div class="card mb-3"><div class="card-body">
       <label class="form-label" for="sqlbox">Statement</label>
       <textarea id="sqlbox" class="form-control font-monospace" rows="4">SELECT * FROM v_region_complaint_summary;</textarea>

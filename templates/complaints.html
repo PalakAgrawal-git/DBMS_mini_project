@@ -2,7 +2,7 @@
 {% from "_macros.html" import page_head, sev_tag, status_tag %}
 {% block title %}Complaints{% endblock %}
 {% block content %}
-{{ page_head("Module 5", "Complaints") }}
+{{ page_head("Complaints", "Complaints") }}
 
 {% if is_citizen %}
 <div class="card mb-4">
@@ -37,7 +37,7 @@
   <div class="card-body">
     <h5 class="card-title">
       {% if is_citizen %}My Complaints{% else %}All Complaints
-      <span class="small text-muted">(severity-prioritised: high-risk regions first)</span>{% endif %}
+      <span class="small text-muted">Sorted by region severity</span>{% endif %}
     </h5>
     <div class="table-responsive">
       <table class="table table-hover align-middle">

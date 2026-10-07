@@ -1,22 +1,10 @@
-"""
-seed.py
-=======
-Populate heatwave.db with realistic dummy data so the app looks populated on
-first run: severity levels, regions, departments, users (citizens/officers/admin),
-weather stations & observations, expert-system predictions (which fire the
-WarningAlert trigger), advisories, and complaints in various states.
-
-Run indirectly via `python init_db.py`, or directly with `python seed.py`
-(assumes the schema already exists).
-
-Default login accounts created (all password: pass123):
-    admin        -- Administrator
-    officer1     -- Officer (Water Supply)
-    officer2     -- Officer (Health)
-    priya        -- Citizen (Nagpur)
-    rahul        -- Citizen (Vidarbha East)
-    sana         -- Citizen (Akola)
-"""
+# Loads dummy data into heatwave.db so the app isn't empty on first run.
+# Run via `python init_db.py`, or directly with `python seed.py` if the
+# schema already exists.
+#
+# Login accounts (all password: pass123):
+#   admin, officer1 (Water Supply), officer2 (Health),
+#   priya/rahul/sana/dev (citizens, one per region)
 
 import os
 import sqlite3
@@ -38,7 +26,7 @@ def run():
     cur = conn.cursor()
     pw = generate_password_hash(PASSWORD)
 
-    # ---- Severity lookup (rank drives the trigger + prioritisation) --------
+    # rank is used by the trigger and for complaint prioritisation
     severities = [
         ("Low", 1, "Normal conditions; no significant heat risk."),
         ("Moderate", 2, "Elevated temperatures; take basic precautions."),
@@ -50,7 +38,7 @@ def run():
     sev_id = {r["level"]: r["severity_id"] for r in
               conn.execute("SELECT * FROM HeatwaveSeverity")}
 
-    # ---- Regions -----------------------------------------------------------
+
     regions = [
         ("Nagpur", "Maharashtra", 2500000),
         ("Vidarbha East", "Maharashtra", 900000),
@@ -60,7 +48,7 @@ def run():
     cur.executemany("INSERT INTO Region (name, state, population) VALUES (?,?,?)", regions)
     region_id = {r["name"]: r["region_id"] for r in conn.execute("SELECT * FROM Region")}
 
-    # ---- Government departments -------------------------------------------
+
     departments = [
         ("Water Supply", "Manages drinking water and tanker distribution.", "1800-111-222"),
         ("Health", "Handles heat-illness response and hospitals.", "1800-333-444"),
@@ -71,13 +59,13 @@ def run():
         "INSERT INTO GovernmentDepartment (name, description, contact) VALUES (?,?,?)", departments)
     dept_id = {r["name"]: r["dept_id"] for r in conn.execute("SELECT * FROM GovernmentDepartment")}
 
-    # ---- Advisories (static catalogue mapped to severity) ------------------
+    # static advisory catalogue, one row per message per severity
     for level, messages in ADVISORIES.items():
         for msg in messages:
             cur.execute("INSERT INTO Advisory (severity_id, message) VALUES (?,?)",
                         (sev_id[level], msg))
 
-    # ---- Users -------------------------------------------------------------
+
     def add_user(username, role, full_name, email):
         cur.execute(
             "INSERT INTO User (username, password_hash, role, full_name, email) VALUES (?,?,?,?,?)",
@@ -111,7 +99,7 @@ def run():
                     (uid, region_id[region], phone, addr))
         citizen_id[uname] = cur.lastrowid
 
-    # ---- Weather stations --------------------------------------------------
+
     stations_spec = [
         ("Nagpur", "Nagpur Central AWS", 21.1458, 79.0882),
         ("Nagpur", "Nagpur Airport AWS", 21.0922, 79.0472),
@@ -127,28 +115,26 @@ def run():
         station_id[name] = cur.lastrowid
 
     # ---- Weather observations + expert-system predictions ------------------
-    # Each tuple: (station, temp, humidity, wind, days_ago). Predictions are
-    # written for the *latest* observation per region and for a couple of past
-    # days so the trend chart has data. High/Extreme predictions fire the trigger.
+    # Timestamps are uneven (hours_ago) so the trend chart doesn't look fake.
     observations_spec = [
-        # station name,            temp, hum, wind, days_ago, make_prediction
-        ("Nagpur Central AWS",     47.0, 18, 8,  0, True),   # Extreme
-        ("Nagpur Central AWS",     44.0, 25, 6,  1, True),   # High
-        ("Nagpur Central AWS",     41.0, 30, 5,  2, True),   # High
-        ("Nagpur Airport AWS",     46.5, 15, 10, 0, False),
-        ("Vidarbha East AWS",      41.0, 35, 7,  0, True),   # High
-        ("Vidarbha East AWS",      38.0, 40, 6,  2, True),   # Moderate
-        ("Akola City AWS",         36.5, 45, 9,  0, True),   # Moderate
-        ("Akola City AWS",         34.0, 55, 8,  3, True),   # Low
-        ("Chandrapur AWS",         33.0, 60, 12, 0, True),   # Low
+        # station name,            temp,  hum, wind, hours_ago, make_prediction
+        ("Nagpur Central AWS",     44.8,  32,  11,  2,   True),   # High
+        ("Nagpur Airport AWS",     41.3,  45,  13,  5,   False),
+        ("Vidarbha East AWS",      41.7,  38,  14,  5,   True),   # High
+        ("Chandrapur AWS",         46.3,  25,   7,  26,  True),   # Extreme
+        ("Nagpur Central AWS",     39.6,  42,  10,  26,  True),   # Moderate
+        ("Vidarbha East AWS",      37.8,  50,   8,  76,  True),   # Moderate
+        ("Akola City AWS",         36.1,  55,  10,  76,  True),   # Moderate
+        ("Akola City AWS",         33.4,  60,   9,  168, True),   # Low
+        ("Chandrapur AWS",         34.9,  58,  12,  168, False),
     ]
 
-    for station, temp, hum, wind, days_ago, make_pred in observations_spec:
+    for station, temp, hum, wind, hours_ago, make_pred in observations_spec:
         sid = station_id[station]
         cur.execute(
             f"""INSERT INTO WeatherObservation
                     (station_id, temperature, humidity, wind_speed, observed_at, recorded_by)
-                VALUES (?,?,?,?, datetime('now', '-{days_ago} days'), ?)""",
+                VALUES (?,?,?,?, datetime('now', '-{hours_ago} hours'), ?)""",
             (sid, temp, hum, wind, off1_uid))
         obs_id = cur.lastrowid
 
@@ -160,39 +146,44 @@ def run():
                 f"""INSERT INTO HeatwavePrediction
                         (region_id, obs_id, severity_id, temperature, humidity, wind_speed,
                          reason, predicted_at)
-                    VALUES (?,?,?,?,?,?,?, datetime('now', '-{days_ago} days'))""",
+                    VALUES (?,?,?,?,?,?,?, datetime('now', '-{hours_ago} hours'))""",
                 (region_of, obs_id, sev_id[level], temp, hum, wind, reason))
-            # The trg_prediction_autowarn trigger auto-creates WarningAlert rows
-            # for High/Extreme predictions -- no manual insert needed here.
+            # trigger handles the alert, not python
 
-    # ---- Complaints in various states -------------------------------------
-    # (citizen, category, description, status, dept, officer, days_ago)
+
+    # (citizen, category, description, status, dept, officer, hours_ago)
     complaints_spec = [
-        ("priya", "Water Shortage", "No water supply for 2 days in our locality during peak heat.",
-         "Open", None, None, 0),
-        ("priya", "Heat Illness", "Elderly neighbour showing signs of heat exhaustion, need help.",
-         "In Progress", "Health", off2_id, 1),
-        ("rahul", "Power Outage", "Frequent power cuts making it impossible to run fans/coolers.",
-         "Open", "Electricity Board", None, 0),
-        ("sana", "Water Shortage", "Tanker did not arrive as scheduled this week.",
-         "Resolved", "Water Supply", off1_id, 3),
-        ("dev", "Public Cooling", "Request for a public cooling center near the bus stand.",
+        ("priya", "Water Shortage", "No drinking water since morning, whole street affected.",
          "Open", None, None, 2),
-        ("rahul", "Heat Illness", "Need ORS packets distributed at the community hall.",
-         "In Progress", "Health", off2_id, 1),
+        ("priya", "Heat Illness", "Elderly neighbour showing signs of heat exhaustion, need help.",
+         "In Progress", "Health", off2_id, 5),
+        ("rahul", "Power Outage", "Power cut for 6 hours yesterday, fans not working.",
+         "Open", "Electricity Board", None, 5),
+        ("sana", "Water Shortage", "Tanker didnt come this week again.",
+         "Resolved", "Water Supply", off1_id, 76),
+        ("dev", "Public Cooling", "No shade at bus stand, people fainting in the heat.",
+         "Open", None, None, 26),
+        ("rahul", "Heat Illness", "Need ORS packets at community hall asap.",
+         "In Progress", "Health", off2_id, 26),
+        ("sana", "Power Outage", "Hospital ward has no power backup during outages.",
+         "Open", "Health", None, 168),
+        ("priya", "Public Cooling", "Can we get a cooling center near MG road.",
+         "Resolved", None, off1_id, 168),
+        ("dev", "Water Shortage", "Water pressure very low since 3 days.",
+         "In Progress", "Water Supply", off1_id, 76),
     ]
-    for uname, cat, desc, status, dept, officer, days_ago in complaints_spec:
+    for uname, cat, desc, status, dept, officer, hours_ago in complaints_spec:
         cur.execute(
             f"""INSERT INTO Complaint
                     (citizen_id, region_id, dept_id, assigned_officer_id, category, description,
                      status, created_at, resolved_at)
                 VALUES (?, (SELECT region_id FROM Citizen WHERE citizen_id = ?), ?, ?, ?, ?, ?,
-                        datetime('now', '-{days_ago} days'),
+                        datetime('now', '-{hours_ago} hours'),
                         {"datetime('now')" if status == 'Resolved' else "NULL"})""",
             (citizen_id[uname], citizen_id[uname],
              dept_id[dept] if dept else None, officer, cat, desc, status))
 
-    # ---- A couple of notifications for the admin ---------------------------
+
     cur.execute("INSERT INTO Notification (user_id, message) VALUES (?,?)",
                 (admin_uid, "Welcome to the Heatwave Early Warning System."))
 

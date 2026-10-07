@@ -3,7 +3,7 @@
 {% block content %}
 <div class="text-center py-5">
   <p class="eyebrow mb-1">Error {{ code }}</p>
-  <h1 class="display-4" style="font-family: var(--font-serif); color: var(--ink);">{{ code }}</h1>
+  <h1 class="display-4" style="color: var(--ink);">{{ code }}</h1>
   <p class="lead text-muted">{{ message }}</p>
   <a class="btn btn-primary" href="{{ url_for('dashboard') if current_user else url_for('login') }}">Go back</a>
 </div>

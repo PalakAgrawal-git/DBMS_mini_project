@@ -1,68 +1,70 @@
-# AI-Based Heatwave Complaint & Early Warning System
+# HeatGuard
 
-A DBMS mini-project: weather monitoring, rule-based heatwave severity
-prediction, citizen complaints, automatic warning alerts, and government
-response tracking, all in one system.
+We built this for our DBMS lab project. It's a heatwave complaint and early
+warning system: weather readings come in, a simple rule-based check classifies
+how severe the heat is, citizens get warned and can file complaints, and
+officers/admins track and resolve them.
 
-> **Live demo:** https://agrawalpalak08.github.io/DBMS_mini_project/
-> It's a client-side build that runs real SQLite in the browser (via sql.js),
-> including the actual schema, trigger and view, so you can click through the
-> whole project with no install. The Flask version in this repo is the full
-> server-based implementation for the lab — run it with the steps below.
+> **Live demo:** https://palakagrawal-git.github.io/DBMS_mini_project/
+> This is a client-side build using sql.js (real SQLite running in the
+> browser), so the schema, trigger and view all work exactly like the Flask
+> version below, just without needing Python installed. Refresh to reset the
+> data.
+
+## What it does
+
+- Officers/admins log weather readings (temperature, humidity, wind) per station.
+- A rule-based classifier turns the latest reading into a severity level
+  (Low/Moderate/High/Extreme) for that region.
+- High/Extreme readings automatically raise a warning alert (via a DB trigger)
+  and citizens in that region get notified.
+- Citizens can file complaints (water shortage, power cuts, heat illness, etc.)
+  tied to their region.
+- Officers/admins assign complaints to a department/officer and move them
+  through Open → In Progress → Resolved. Complaints in higher-severity regions
+  are shown first.
+- A reports page has a few Chart.js charts (complaints by status/region,
+  severity distribution, prediction trend) plus a region risk list.
+- Admins get table row counts and CSV export for every table.
+
+## Tech used
 
 - **Backend:** Python (Flask)
-- **Database:** SQLite (single file `heatwave.db`)
-- **Frontend:** Server-rendered Jinja2 templates + Bootstrap 5
+- **Database:** SQLite (`heatwave.db`)
+- **Frontend:** Jinja2 templates + Bootstrap 5
 - **Charts:** Chart.js
-- **"AI" module:** a rule-based expert system (threshold rules), no ML libraries — more on this in [section 3](#3-the-rule-based-expert-system-ai-module).
 
----
-
-## 1. Setup & Run
-
-### Prerequisites
-- Python 3.9+ installed.
-
-### Steps
+## How to run
 
 ```bash
-# 1. (optional) create a virtual environment
+# optional venv
 python -m venv venv
 venv\Scripts\activate        # Windows
 # source venv/bin/activate   # macOS/Linux
 
-# 2. install dependencies
 pip install -r requirements.txt
-
-# 3. create the database (schema + trigger + view + seed data)
-python init_db.py
-
-# 4. run the server
+python init_db.py            # creates the schema + seed data
 python app.py
 ```
 
-Then open <http://127.0.0.1:5000> in your browser.
+Then open <http://127.0.0.1:5000>.
 
-To rebuild the DB from scratch at any time, just run `python init_db.py` again
-(it drops and recreates everything). For an empty schema without seed data:
-`python init_db.py --schema`.
+Re-run `python init_db.py` any time to reset the database. Use
+`python init_db.py --schema` for an empty schema with no seed data.
 
-### Demo login accounts (password: `pass123`)
+### Demo accounts (password: `pass123`)
 
-| Username   | Role          | Notes                          |
-|------------|---------------|--------------------------------|
-| `admin`    | Administrator | full access, DB admin, reports |
-| `officer1` | Officer       | Water Supply department         |
-| `officer2` | Officer       | Health department               |
-| `priya`    | Citizen       | Nagpur                          |
-| `rahul`    | Citizen       | Vidarbha East                   |
-| `sana`     | Citizen       | Akola                           |
+| Username   | Role          | Notes             |
+|------------|---------------|-------------------|
+| `admin`    | Administrator | full access       |
+| `officer1` | Officer       | Water Supply dept |
+| `officer2` | Officer       | Health dept       |
+| `priya`    | Citizen       | Nagpur            |
+| `rahul`    | Citizen       | Vidarbha East     |
+| `sana`     | Citizen       | Akola             |
+| `dev`      | Citizen       | Chandrapur        |
 
----
-
-## 2. ER Diagram
-
-Entities, relationships and cardinalities:
+## ER Diagram
 
 ```mermaid
 erDiagram
@@ -93,95 +95,37 @@ erDiagram
     Officer ||--o{ Complaint : "assigned to"
 ```
 
-**Cardinalities in words**
-- A **Region** has many **WeatherStations**; each **WeatherStation** logs many **WeatherObservations**.
-- A **Region** has many **HeatwavePredictions** and **WarningAlerts**.
-- **User** is the base login table; each user is exactly one of **Citizen / Officer / Administrator** (1:1 sub-type tables).
-- A **Citizen** belongs to one **Region** and files many **Complaints**.
-- An **Officer** belongs to one **GovernmentDepartment** and is assigned many **Complaints**.
-- A **Complaint** links one **Citizen**, one **Region**, and optionally one **Department** + one **Officer**.
-- **HeatwaveSeverity** is a lookup table referenced by predictions, alerts, and advisories.
-- **Advisory** is a static catalogue of messages mapped to a severity level.
-- **Notification** links to one **User**.
+Each `User` row is exactly one of Citizen/Officer/Administrator (1:1 sub-type
+tables off the base User table, so login stays in one place). A Region has
+many weather stations, predictions, alerts and complaints. `HeatwaveSeverity`
+and `Advisory` are lookup tables so severity levels and advisory text aren't
+duplicated everywhere.
 
----
+## Severity rules
 
-## 3. The Rule-Based Expert System (AI module)
+Located in `expert_system.py`. It's a basic rule-based classifier, not
+machine learning (that's intentional for this course):
 
-Located in [`expert_system.py`](expert_system.py). It is a **rule-based / knowledge-based
-expert system**, *not* machine learning — this is intentional and matches the course
-requirement. Given the latest weather observation it applies fixed IF-THEN rules:
+| Severity  | Rule                                               |
+|-----------|-----------------------------------------------------|
+| Extreme   | temp ≥ 45°C, or (temp ≥ 40°C and humidity ≤ 20%)     |
+| High      | temp ≥ 40°C                                          |
+| Moderate  | temp ≥ 35°C                                          |
+| Low       | below 35°C                                           |
 
-| Severity  | Rule                                                        |
-|-----------|-------------------------------------------------------------|
-| Extreme   | `temp ≥ 45°C`  **OR**  (`temp ≥ 40°C` **AND** `humidity ≤ 20%`) |
-| High      | `temp ≥ 40°C`                                               |
-| Moderate  | `temp ≥ 35°C`                                               |
-| Low       | below 35°C                                                  |
+The result is saved to `HeatwavePrediction`. When severity is High or
+Extreme, the `trg_prediction_autowarn` trigger automatically inserts a
+`WarningAlert` row for that region — no Python logic needed for that part.
 
-The result is written to `HeatwavePrediction` (with the rule that fired stored in `reason`).
-When severity is **High or Extreme**, a **database trigger** auto-creates a `WarningAlert`,
-and the backend attaches a static set of **Advisory** messages for that severity.
+The schema also has one view, `v_region_complaint_summary`, which gives the
+total/open/in-progress/resolved complaint counts per region. It's used on
+both the admin and officer dashboards instead of running that join twice.
+The schema is normalized to 3NF — lookup tables for severity/department
+avoid repeating text, and the Citizen/Officer/Administrator split keeps
+role-specific columns out of the base User table.
 
----
+## Limitations
 
-## 4. Modules
-
-1. **User Management** — register/login for Citizen/Officer/Administrator; role-based access control (each role has its own dashboard and permissions, enforced by the `@role_required` decorator).
-2. **Weather Monitoring** — CRUD for `WeatherStation` and `WeatherObservation`; officers/admins add observations.
-3. **AI Heatwave Prediction** — the rule-based classifier writing to `HeatwavePrediction`.
-4. **Early Warning & Advisory** — auto `WarningAlert` (via DB trigger) + advisory messages; citizens see active alerts for their region.
-5. **Complaint Management** — citizens file complaints (tied to their region) and track status.
-6. **Complaint Assignment & Resolution** — officers/admins assign complaints to a department/officer and move status `Open → In Progress → Resolved`; complaints in **Extreme/High** severity regions are automatically ranked above Low/Moderate ones.
-7. **Dashboard & Reports** — region risk levels (color-coded), complaint stats by status/region (Chart.js pie/bar), severity distribution, and a prediction trend line chart; active-alerts list.
-8. **Database Administration** — table row counts + one-click **CSV export** of any table (backup-style).
-
----
-
-## 5. Project Files
-
-```
-DBMS_mini_project/
-├── app.py                    # Flask backend, all 8 modules
-├── expert_system.py          # rule-based expert system (severity classifier)
-├── schema.sql                # complete SQL schema + trigger + view
-├── init_db.py                # builds heatwave.db from schema.sql, then seeds
-├── seed.py                   # realistic dummy data
-├── requirements.txt
-├── static/css/heatguard.css  # shared stylesheet (Flask + the index.html demo)
-├── templates/                # Jinja2 templates (citizen/officer/admin/dashboard/...)
-│   └── _macros.html          # sev_tag / status_tag / page_head, used by every page
-├── index.html                # standalone demo: same UI, runs on SQLite in the browser
-└── README.md
-```
-
----
-
-## 6. Where things live
-
-A quick map from each grading point to the code, for the viva.
-
-| Grading point            | Where it is implemented |
-|--------------------------|--------------------------|
-| **Schema / normalization (3NF)** | [`schema.sql`](schema.sql) — 14 tables with proper PK/FK constraints, `HeatwaveSeverity` and `Advisory` as lookup tables to avoid redundancy, sub-type tables (Citizen/Officer/Administrator) off a base `User`. |
-| **Triggers**             | `trg_prediction_autowarn` in [`schema.sql`](schema.sql) — after inserting a `HeatwavePrediction` with severity rank ≥ 3 (High/Extreme), it auto-inserts a `WarningAlert` row. |
-| **Views**                | `v_region_complaint_summary` in [`schema.sql`](schema.sql) — region-wise total/open/in-progress/resolved complaint counts, used on the officer & admin dashboards and reports. |
-| **Foreign key constraints** | Enforced throughout `schema.sql` (with `ON DELETE` rules) and `PRAGMA foreign_keys = ON` in [`app.py`](app.py). |
-| **Role-based access**    | `@login_required` / `@role_required(...)` decorators + separate dashboards in [`app.py`](app.py). Verified: citizens get **403** on `/reports` and `/admin/db`. |
-| **AI module (rule-based expert system)** | [`expert_system.py`](expert_system.py) — threshold IF-THEN rules, no ML libraries; output stored in `HeatwavePrediction`. |
-| **Dashboard / reports**  | [`templates/reports.html`](templates/reports.html) + `/api/*` endpoints in `app.py` feeding Chart.js pie, bar and line charts, plus color-coded region risk. |
-
----
-
-## 7. Assumptions made
-
-- Each `User` is exactly one role; the sub-type tables (Citizen/Officer/Administrator)
-  hold role-specific attributes (1:1 with User).
-- The `WarningAlert` is generated by a **database trigger** (chosen over backend-only logic
-  so the rule holds even for direct SQL inserts); the backend additionally sends in-app
-  notifications to affected citizens.
-- `Advisory` is modelled as a static catalogue mapped to severity level (seeded once),
-  rather than a row generated per alert, to keep the schema in 3NF.
-- Complaint prioritisation uses each region's **most recent** prediction severity.
-- Passwords are stored hashed (`werkzeug.security`); the Flask `SECRET_KEY` is a dev
-  placeholder — change it for any real deployment.
+- Weather data is dummy/seeded, there's no real weather API hooked up.
+- The "AI" part is rule-based thresholds, not a trained model.
+- The Flask `SECRET_KEY` in `app.py` is a dev placeholder, not for real use.

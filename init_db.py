@@ -1,14 +1,6 @@
-"""
-init_db.py
-==========
-Create the SQLite database from schema.sql, then load seed data.
-
-Usage:
-    python init_db.py            # create schema + seed
-    python init_db.py --schema   # create schema only (no seed data)
-
-This DROPS and recreates all tables, so it is safe to re-run.
-"""
+# Builds heatwave.db from schema.sql and loads seed data.
+# `python init_db.py --schema` skips the seed step.
+# Drops and recreates everything each time, so it's safe to re-run.
 
 import os
 import sqlite3
