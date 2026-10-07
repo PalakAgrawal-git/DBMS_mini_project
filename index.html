@@ -366,21 +366,21 @@ function loginScreen() {
 
   app(`
    <div class="hero">
-     <p class="eyebrow">DBMS Mini Project</p>
      <h1>HeatGuard</h1>
      <p>Demo project. Pick an account to log in. Data resets when you refresh.</p>
    </div>
-   <div class="account-section row g-3">
+   <div class="account-section row g-4">
      ${roleGroups.map(([role, label]) => {
         if (!counts[role]) return '';
         const m = roleMeta[role];
         return `<div class="col-md-4">
-          <div class="card account-card h-100" role="button" onclick="pickRole('${role}')">
+          <div class="card account-card role-card h-100 shadow-sm" role="button" onclick="pickRole('${role}')">
             <div class="card-body text-center">
               <div class="account-avatar ${m.cls} role-avatar-lg">${m.icon}</div>
               <h5 class="card-title mb-1">${label}</h5>
               <p class="account-desc">${m.desc}</p>
               <p class="account-handle">${counts[role]} account${counts[role] > 1 ? 's' : ''}</p>
+              <span class="role-card-cta">Continue &rarr;</span>
             </div>
           </div>
         </div>`;
