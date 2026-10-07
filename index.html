@@ -427,6 +427,7 @@ function pickRole(role) { pickedRole = role; loginScreen(); }
 function roleAccountScreen(role) {
   const users = run("SELECT * FROM User WHERE role=? ORDER BY full_name", [role]);
   const m = roleMeta[role];
+  const label = (roleGroups.find(g => g[0] === role) || [role, role])[1];
   const officerDesc = { 'Water Supply': 'Water supply department', 'Health': 'Health department' };
   const citizenDesc = { priya: 'Reports from Nagpur', rahul: 'Reports from Vidarbha East',
     sana: 'Reports from Akola', dev: 'Reports from Chandrapur' };
@@ -451,8 +452,7 @@ function roleAccountScreen(role) {
      <a href="#" class="back-link" onclick="pickedRole=null;loginScreen();return false;">&larr; Back to roles</a>
      <div class="hero hero-compact">
        <div class="account-avatar ${m.cls} role-avatar-lg">${m.icon}</div>
-       <p class="eyebrow">${role}</p>
-       <h1>Welcome</h1>
+       <h1>Welcome, ${esc(label)}</h1>
        <p>Pick an account to log in as.</p>
      </div>
      ${users.map(accountRow).join('')}
