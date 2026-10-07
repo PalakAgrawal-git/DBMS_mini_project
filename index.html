@@ -331,7 +331,7 @@ function buildNav() {
     <li class="nav-item"><button class="btn btn-outline-primary btn-sm ms-2" onclick="logout();return false;">Switch account</button></li>`;
 }
 function go(view){ currentView = view; buildNav(); (VIEWS[view]||VIEWS.dashboard)(); window.scrollTo(0,0); }
-function logout(){ currentUser=null; pickedRole=null; buildNav(); loginScreen(); }
+function logout(){ currentUser=null; buildNav(); loginScreen(); }
 function loginAs(uid){ currentUser = one("SELECT * FROM User WHERE user_id=?",[uid]); go('dashboard'); }
 
 function app(html){
