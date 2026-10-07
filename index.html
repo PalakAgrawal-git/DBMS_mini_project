@@ -384,11 +384,16 @@ function loginScreen() {
      <h1>HeatGuard</h1>
      <p>Demo project. Pick an account to log in. Data resets when you refresh.</p>
    </div>
-   <div class="account-section">
+   <div class="account-section row g-3">
      ${groups.map(([role, label]) => {
         const rows = users.filter(u => u.role === role);
         if (!rows.length) return '';
-        return `<p class="account-group-label">${label}</p>${rows.map(accountRow).join('')}`;
+        return `<div class="col-md-4">
+          <div class="card account-card h-100">
+            <div class="card-header account-card-header">${label}</div>
+            <div class="card-body">${rows.map(accountRow).join('')}</div>
+          </div>
+        </div>`;
       }).join('')}
    </div>`);
 }
