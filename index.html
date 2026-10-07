@@ -502,9 +502,11 @@ function citizenDashboard() {
     </div></div>
     <div class="card mt-3"><div class="card-body">
       <div class="d-flex justify-content-between"><h5 class="card-title mb-0">My Complaints</h5><button class="btn btn-sm btn-primary" onclick="go('complaints')">File / View</button></div>
+      <div class="table-responsive">
       <table class="table table-sm mt-2"><thead><tr><th class="num">#</th><th>Category</th><th>Status</th><th>Filed</th></tr></thead><tbody>
-      ${mine.length?mine.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.category)}</td><td>${statusBadge(c.status)}</td><td class="small text-muted mono" title="${c.created_at}">${fmtDate(c.created_at)}</td></tr>`).join(''):`<tr class="empty-row"><td colspan="4">None yet.</td></tr>`}
+      ${mine.length?mine.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.category)}</td><td>${statusBadge(c.status)}</td><td class="small text-muted" title="${c.created_at}">${fmtDate(c.created_at)}</td></tr>`).join(''):`<tr class="empty-row"><td colspan="4">None yet.</td></tr>`}
       </tbody></table>
+      </div>
     </div></div>`);
 }
 
@@ -526,9 +528,11 @@ function officerDashboard() {
     <div class="card mb-3"><div class="card-body">
       <h5 class="card-title">Complaints assigned to you / your department</h5>
       <p class="small text-muted">Sorted by region severity, then oldest first.</p>
+      <div class="table-responsive">
       <table class="table table-hover align-middle"><thead><tr><th class="num">#</th><th>Region</th><th>Risk</th><th>Category</th><th>Citizen</th><th>Status</th><th></th></tr></thead><tbody>
       ${assigned.length?assigned.map(c=>`<tr><td class="num">${c.complaint_id}</td><td>${esc(c.region_name)}</td><td>${sevBadge(c.region_level)}</td><td>${esc(c.category)}</td><td>${esc(c.citizen_name)}</td><td>${statusBadge(c.status)}</td><td><button class="btn btn-sm btn-outline-primary" onclick="go('complaints');setTimeout(()=>openComplaint(${c.complaint_id}),0)">Manage</button></td></tr>`).join(''):`<tr class="empty-row"><td colspan="7">No complaints assigned.</td></tr>`}
       </tbody></table>
+      </div>
     </div></div>
     ${summaryCard(summary)}`);
 }
@@ -711,14 +715,16 @@ function openComplaint(id) {
     ${pageHead('Complaint', 'Complaint #' + c.complaint_id)}
     <div class="row g-3"><div class="col-md-7"><div class="card"><div class="card-body">
       <h5 class="card-title">${esc(c.category)} ${statusBadge(c.status)}</h5><p>${esc(c.description)}</p>
+      <div class="table-responsive">
       <table class="table table-sm">
         <tr><th>Region</th><td>${esc(c.region_name)}</td></tr>
         <tr><th>Filed by</th><td>${esc(c.citizen_name)}</td></tr>
         <tr><th>Department</th><td>${esc(c.dept_name||'Not assigned')}</td></tr>
         <tr><th>Officer</th><td>${esc(c.officer_name||'Not assigned')}</td></tr>
-        <tr><th>Created</th><td class="mono" title="${c.created_at}">${fmtDate(c.created_at)}</td></tr>
-        <tr><th>Resolved</th><td class="mono" title="${c.resolved_at||''}">${c.resolved_at?fmtDate(c.resolved_at):'-'}</td></tr>
-      </table></div></div></div>
+        <tr><th>Created</th><td title="${c.created_at}">${fmtDate(c.created_at)}</td></tr>
+        <tr><th>Resolved</th><td title="${c.resolved_at||''}">${c.resolved_at?fmtDate(c.resolved_at):'-'}</td></tr>
+      </table>
+      </div></div></div></div>
       ${canManage?`<div class="col-md-5">
         <div class="card mb-3"><div class="card-body"><h6 class="card-title">Assign</h6>
           <label class="form-label">Department</label>

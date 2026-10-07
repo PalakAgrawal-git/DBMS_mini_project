@@ -252,3 +252,14 @@ td.num, th.num { text-align: right; }
   max-width: 90vw;
   padding: .65rem 1rem;
 }
+
+/* Small screens */
+@media (max-width: 576px) {
+  .hero { padding: 2rem 0 1rem; }
+  .hero h1 { font-size: 2.1rem; }
+  .hero p { font-size: .95rem; }
+  .hero-compact h1 { font-size: 1.6rem; }
+  .stat-num { font-size: 1.3rem; }
+  .account-row, .account-card .card-body { padding: .85rem; }
+  .page-head h1 { font-size: 1.5rem; }
+}

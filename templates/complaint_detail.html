@@ -10,14 +10,16 @@
     <div class="card"><div class="card-body">
       <h5 class="card-title">{{ c.category }} {{ status_tag(c.status) }}</h5>
       <p>{{ c.description }}</p>
+      <div class="table-responsive">
       <table class="table table-sm">
         <tr><th>Region</th><td>{{ c.region_name }}</td></tr>
         <tr><th>Filed by</th><td>{{ c.citizen_name }}</td></tr>
         <tr><th>Department</th><td>{{ c.dept_name or 'Not assigned' }}</td></tr>
         <tr><th>Officer</th><td>{{ c.officer_name or 'Not assigned' }}</td></tr>
-        <tr><th>Created</th><td class="mono" title="{{ c.created_at }}">{{ c.created_at | when }}</td></tr>
-        <tr><th>Resolved</th><td class="mono" title="{{ c.resolved_at or '' }}">{{ c.resolved_at | when }}</td></tr>
+        <tr><th>Created</th><td title="{{ c.created_at }}">{{ c.created_at | when }}</td></tr>
+        <tr><th>Resolved</th><td title="{{ c.resolved_at or '' }}">{{ c.resolved_at | when }}</td></tr>
       </table>
+      </div>
     </div></div>
   </div>
 
