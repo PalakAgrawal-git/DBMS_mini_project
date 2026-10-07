@@ -171,7 +171,8 @@ td.num, th.num { text-align: right; }
   display: inline-block; margin-top: .9rem; font-size: .85rem; font-weight: 600;
   color: var(--accent); opacity: 0; transition: opacity .15s ease;
 }
-.role-card:hover .role-card-cta { opacity: 1; }
+.role-card:hover .role-card-cta,
+.user-card:hover .role-card-cta { opacity: 1; }
 .role-avatar-lg { width: 60px; height: 60px; font-size: 1.5rem; margin: 0 auto .9rem; }
 .account-row {
   display: flex; align-items: center; gap: .85rem;
@@ -214,8 +215,13 @@ td.num, th.num { text-align: right; }
 .step-card h6 { font-weight: 600; margin-bottom: .35rem; }
 .step-card p { font-size: .85rem; color: var(--muted); margin: 0; }
 
-.account-section-narrow { max-width: 480px; margin: 1.5rem auto 0; }
-.account-section-narrow .account-row { box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.account-card-link { text-decoration: none; color: inherit; display: block; }
+.user-card {
+  border-top: 3px solid var(--accent);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.user-card:hover { transform: translateY(-4px); }
+.user-card .role-avatar-lg { width: 52px; height: 52px; font-size: 1.1rem; }
 .back-link { display: inline-block; font-size: .85rem; }
 .hero-compact { padding: 1.25rem 0 1.5rem; }
 .hero-compact h1 { font-size: 2rem; }

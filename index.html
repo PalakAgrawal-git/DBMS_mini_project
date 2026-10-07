@@ -432,30 +432,37 @@ function roleAccountScreen(role) {
   const citizenDesc = { priya: 'Reports from Nagpur', rahul: 'Reports from Vidarbha East',
     sana: 'Reports from Akola', dev: 'Reports from Chandrapur' };
 
-  function accountRow(u) {
+  function accountCard(u) {
     let desc = m.desc;
     if (role === 'Officer') desc = officerDesc[officerOf(u.user_id).dept_name] || desc;
     if (role === 'Citizen') desc = citizenDesc[u.username] || desc;
     return `
-      <a class="account-row" href="#" onclick="loginAs(${u.user_id});return false;">
-        <div class="account-avatar ${m.cls}">${initials(u.full_name)}</div>
-        <div class="account-meta">
-          <div class="account-name">${esc(u.full_name)}</div>
-          <div class="account-handle">@${esc(u.username)}</div>
-          <div class="account-desc">${desc}</div>
-        </div>
-      </a>`;
+      <div class="col-sm-6 col-lg-4">
+        <a class="account-card-link" href="#" onclick="loginAs(${u.user_id});return false;">
+          <div class="card account-card user-card h-100 shadow-sm">
+            <div class="card-body text-center">
+              <div class="account-avatar ${m.cls} role-avatar-lg">${initials(u.full_name)}</div>
+              <h6 class="card-title mb-0">${esc(u.full_name)}</h6>
+              <div class="account-handle">@${esc(u.username)}</div>
+              <p class="account-desc mb-0">${desc}</p>
+              <span class="role-card-cta">Log in as ${esc(u.full_name.split(' ')[0])} &rarr;</span>
+            </div>
+          </div>
+        </a>
+      </div>`;
   }
 
   app(`
-   <div class="account-section-narrow">
+   <div class="account-section">
      <a href="#" class="back-link" onclick="pickedRole=null;loginScreen();return false;">&larr; Back to roles</a>
      <div class="hero hero-compact">
        <div class="account-avatar ${m.cls} role-avatar-lg">${m.icon}</div>
        <h1>Welcome, ${esc(label)}</h1>
        <p>Pick an account to log in as.</p>
      </div>
-     ${users.map(accountRow).join('')}
+     <div class="row g-3 justify-content-center">
+       ${users.map(accountCard).join('')}
+     </div>
    </div>`);
 }
 
