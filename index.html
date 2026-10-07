@@ -831,7 +831,6 @@ VIEWS.sql = function() {
       <div class="mt-2 d-flex gap-2 flex-wrap">
         <button class="btn btn-sm btn-primary" onclick="runSQL()">Run</button>
         <button class="btn btn-sm btn-outline-secondary" onclick="sqlSample('SELECT * FROM v_region_complaint_summary;')">Summary view</button>
-        <button class="btn btn-sm btn-outline-secondary" onclick="sqlSample('SELECT name FROM sqlite_master WHERE type=\\'trigger\\';')">Show triggers</button>
         <button class="btn btn-sm btn-outline-secondary" onclick="sqlSample('SELECT * FROM WarningAlert;')">Warning alerts (trigger output)</button>
         <button class="btn btn-sm btn-outline-secondary" onclick="sqlSample('SELECT sql FROM sqlite_master WHERE type=\\'view\\';')">View definition</button>
       </div>
