@@ -192,6 +192,34 @@ td.num, th.num { text-align: right; }
 .account-name { font-weight: 600; color: var(--ink); }
 .account-handle { font-size: .8rem; color: var(--muted); }
 .account-desc { font-size: .78rem; color: var(--muted); }
+
+.stat-strip { max-width: 900px; margin: 0 auto 2rem; }
+.stat-chip {
+  border: 1px solid var(--rule); border-radius: 6px; background: var(--surface);
+  padding: .9rem .5rem;
+}
+.stat-num { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: .78rem; color: var(--muted); }
+
+.howitworks { max-width: 980px; margin: 2.5rem auto 0; }
+.howitworks-label {
+  text-align: center; font-size: .8rem; font-weight: 600; color: var(--muted);
+  margin-bottom: 1rem;
+}
+.step-card {
+  border: 1px solid var(--rule); border-radius: 6px; background: var(--surface);
+  padding: 1.25rem; height: 100%; text-align: center;
+}
+.step-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+.step-card h6 { font-weight: 600; margin-bottom: .35rem; }
+.step-card p { font-size: .85rem; color: var(--muted); margin: 0; }
+
+.account-section-narrow { max-width: 480px; margin: 1.5rem auto 0; }
+.account-section-narrow .account-row { box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.back-link { display: inline-block; font-size: .85rem; }
+.hero-compact { padding: 1.25rem 0 1.5rem; }
+.hero-compact h1 { font-size: 2rem; }
+.hero-compact .role-avatar-lg { margin-bottom: .75rem; }
 .account-role {
   font-size: .72rem; font-weight: 600; padding: .22rem .55rem; border-radius: 999px;
   border: 1px solid var(--rule); color: var(--muted); flex-shrink: 0;

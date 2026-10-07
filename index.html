@@ -364,10 +364,32 @@ function loginScreen() {
   const counts = {};
   users.forEach(u => counts[u.role] = u.n);
 
+  const regionCount = one("SELECT COUNT(*) AS n FROM Region").n;
+  const activeAlerts = one("SELECT COUNT(*) AS n FROM WarningAlert WHERE is_active=1").n;
+  const complaintCount = one("SELECT COUNT(*) AS n FROM Complaint").n;
+  const resolvedCount = one("SELECT COUNT(*) AS n FROM Complaint WHERE status='Resolved'").n;
+
+  const stats = [
+    [regionCount, 'Regions tracked'],
+    [activeAlerts, 'Active alerts'],
+    [complaintCount, 'Complaints filed'],
+    [resolvedCount, 'Resolved'],
+  ];
+  const steps = [
+    ['&#127777;', 'Record weather', 'Officers log temperature readings for their region.'],
+    ['&#9889;', 'Expert system reacts', 'Rules classify severity; high/extreme readings raise an alert.'],
+    ['&#128172;', 'Citizens respond', 'Residents see alerts and file heat-related complaints.'],
+  ];
+
   app(`
    <div class="hero">
      <h1>HeatGuard</h1>
      <p>Demo project. Pick an account to log in. Data resets when you refresh.</p>
+   </div>
+   <div class="stat-strip row g-3 text-center">
+     ${stats.map(([n, l]) => `<div class="col-6 col-md-3">
+        <div class="stat-chip"><div class="stat-num">${n}</div><div class="stat-label">${l}</div></div>
+      </div>`).join('')}
    </div>
    <div class="account-section row g-4">
      ${roleGroups.map(([role, label]) => {
@@ -385,6 +407,18 @@ function loginScreen() {
           </div>
         </div>`;
       }).join('')}
+   </div>
+   <div class="howitworks">
+     <p class="howitworks-label">How it works</p>
+     <div class="row g-3">
+       ${steps.map(([icon, title, text]) => `<div class="col-md-4">
+          <div class="step-card">
+            <div class="step-icon">${icon}</div>
+            <h6>${title}</h6>
+            <p>${text}</p>
+          </div>
+        </div>`).join('')}
+     </div>
    </div>`);
 }
 
@@ -413,14 +447,15 @@ function roleAccountScreen(role) {
   }
 
   app(`
-   <div class="hero">
-     <p class="eyebrow">${role}</p>
-     <h1>Welcome</h1>
-     <p>Pick an account to log in as.</p>
-   </div>
-   <div class="account-section">
+   <div class="account-section-narrow">
+     <a href="#" class="back-link" onclick="pickedRole=null;loginScreen();return false;">&larr; Back to roles</a>
+     <div class="hero hero-compact">
+       <div class="account-avatar ${m.cls} role-avatar-lg">${m.icon}</div>
+       <p class="eyebrow">${role}</p>
+       <h1>Welcome</h1>
+       <p>Pick an account to log in as.</p>
+     </div>
      ${users.map(accountRow).join('')}
-     <a href="#" class="d-inline-block mt-3" onclick="pickedRole=null;loginScreen();return false;">&larr; Back to roles</a>
    </div>`);
 }
 
