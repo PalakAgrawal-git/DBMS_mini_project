@@ -2,7 +2,7 @@
 {% from "_macros.html" import page_head %}
 {% block title %}Database Administration{% endblock %}
 {% block content %}
-{{ page_head("Admin", "Database Administration", "Table row counts and CSV export.") }}
+{{ page_head("Admin", "Database Administration", "Table row counts and SQL export.") }}
 
 <div class="card">
   <div class="card-body">
@@ -16,7 +16,7 @@
             <td class="num">{{ row.rows }}</td>
             <td>
               <a class="btn btn-sm btn-outline-success"
-                 href="{{ url_for('admin_export', table=row.table) }}">Download CSV</a>
+                 href="{{ url_for('admin_export', table=row.table) }}">Download SQL</a>
             </td>
           </tr>
           {% endfor %}

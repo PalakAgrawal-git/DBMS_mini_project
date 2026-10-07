@@ -1,7 +1,5 @@
 # Flask backend for HeatGuard - weather, predictions, alerts, complaints.
 
-import csv
-import io
 import os
 import sqlite3
 from datetime import datetime
@@ -712,26 +710,29 @@ def admin_db():
     return render_template("admin_db.html", counts=counts)
 
 
+def _sql_literal(v):
+    if v is None:
+        return "NULL"
+    if isinstance(v, (int, float)):
+        return str(v)
+    return "'" + str(v).replace("'", "''") + "'"
+
+
 @app.route("/admin/export/<table>")
 @role_required("Administrator")
 def admin_export(table):
     if table not in ADMIN_TABLES:
         abort(404)
     rows = query(f"SELECT * FROM {table}")
-    output = io.StringIO()
-    writer = csv.writer(output)
-    if rows:
-        writer.writerow(rows[0].keys())
-        for r in rows:
-            writer.writerow(list(r))
-    else:
-        # Still emit the header row from PRAGMA table_info.
-        cols = [c["name"] for c in query(f"PRAGMA table_info({table})")]
-        writer.writerow(cols)
+    cols = [c["name"] for c in query(f"PRAGMA table_info({table})")]
+    lines = [f"-- {table} ({len(rows)} rows)"]
+    for r in rows:
+        values = ", ".join(_sql_literal(r[c]) for c in cols)
+        lines.append(f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({values});")
     return Response(
-        output.getvalue(),
-        mimetype="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={table}.csv"},
+        "\n".join(lines) + "\n",
+        mimetype="text/plain",
+        headers={"Content-Disposition": f"attachment; filename={table}.sql"},
     )
 
 

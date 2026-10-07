@@ -804,19 +804,23 @@ function drawCharts() {
 
 VIEWS.dbadmin = function() {
   const tables = ["User","Region","HeatwaveSeverity","GovernmentDepartment","Citizen","Officer","Administrator","WeatherStation","WeatherObservation","HeatwavePrediction","Advisory","WarningAlert","Complaint","Notification"];
-  app(`${pageHead('Admin', 'Database Administration', 'Table row counts and CSV export.')}
+  app(`${pageHead('Admin', 'Database Administration', 'Table row counts and SQL export.')}
     <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Table</th><th class="num">Row count</th><th>Export</th></tr></thead><tbody>
-    ${tables.map(t=>`<tr><td><code>${t}</code></td><td class="num">${one("SELECT COUNT(*) c FROM "+t).c}</td><td><button class="btn btn-sm btn-outline-success" onclick="exportCSV('${t}')">Download CSV</button></td></tr>`).join('')}
+    ${tables.map(t=>`<tr><td><code>${t}</code></td><td class="num">${one("SELECT COUNT(*) c FROM "+t).c}</td><td><button class="btn btn-sm btn-outline-success" onclick="exportSQL('${t}')">Download SQL</button></td></tr>`).join('')}
     </tbody></table></div></div></div>`);
 };
-function exportCSV(table) {
+function sqlLiteral(v) {
+  if (v === null || v === undefined) return 'NULL';
+  if (typeof v === 'number') return String(v);
+  return "'" + String(v).replace(/'/g, "''") + "'";
+}
+function exportSQL(table) {
   const rows = run("SELECT * FROM "+table);
-  let cols = rows.length ? Object.keys(rows[0]) : (run("PRAGMA table_info("+table+")").map(c=>c.name));
-  const csv = [cols.join(',')].concat(rows.map(r=>cols.map(c=>{
-    let v = r[c]==null?'':String(r[c]); if (/[",\n]/.test(v)) v='"'+v.replace(/"/g,'""')+'"'; return v;
-  }).join(','))).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = table+'.csv'; a.click();
+  const cols = rows.length ? Object.keys(rows[0]) : (run("PRAGMA table_info("+table+")").map(c=>c.name));
+  const lines = [`-- ${table} (${rows.length} rows)`].concat(rows.map(r =>
+    `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(c=>sqlLiteral(r[c])).join(', ')});`));
+  const blob = new Blob([lines.join('\n')+'\n'], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = table+'.sql'; a.click();
 }
 
 VIEWS.sql = function() {
