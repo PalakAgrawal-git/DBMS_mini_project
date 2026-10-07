@@ -838,6 +838,16 @@ VIEWS.sql = function() {
     <div id="sqlresult"></div>`);
 };
 function sqlSample(q){ document.getElementById('sqlbox').value = q; runSQL(); }
+const SQL_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+function fmtCell(v) {
+  if (typeof v === 'string' && SQL_TIMESTAMP_RE.test(v)) {
+    const dt = new Date(v.replace(' ', 'T') + 'Z');
+    if (!isNaN(dt.getTime())) {
+      return dt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+  }
+  return v;
+}
 function runSQL() {
   const q = document.getElementById('sqlbox').value;
   const out = document.getElementById('sqlresult');
@@ -845,7 +855,7 @@ function runSQL() {
     const res = db.exec(q);
     if (!res.length) { out.innerHTML = `<div class="alert alert-success">Statement executed. No rows returned.</div>`; return; }
     const {columns, values} = res[0];
-    out.innerHTML = `<div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-sm"><thead><tr>${columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${values.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="small text-muted mb-0">${values.length} row(s).</p></div></div>`;
+    out.innerHTML = `<div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-sm"><thead><tr>${columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${values.map(row=>`<tr>${row.map(v=>`<td>${esc(fmtCell(v))}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="small text-muted mb-0">${values.length} row(s).</p></div></div>`;
   } catch(e) {
     out.innerHTML = `<div class="alert alert-danger">${esc(e.message)}</div>`;
   }
